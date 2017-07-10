@@ -3,7 +3,8 @@ package com.simple.server.dao;
 import java.util.List;
 import java.util.Map;
 
-import org.hibernate.Query;
+import javax.transaction.Transactional;
+
 import org.hibernate.Session;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -15,7 +16,7 @@ public interface IDao {
 	
 	Session currentSession() throws Exception;	
 	JdbcTemplate currentJDBCTemplate() throws Exception;
-	
+	@Transactional
 	void insert(List<IRec> list) throws Exception;
 	void insert(IRec rec) throws Exception;
 	void insertAsIs(IContract msg) throws Exception;

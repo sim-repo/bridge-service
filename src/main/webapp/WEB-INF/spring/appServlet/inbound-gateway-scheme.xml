@@ -38,10 +38,10 @@
 	</bean>
 	
 	<int-jms:inbound-gateway request-channel="channelBus"
-		request-destination="brq" connection-factory="inboundConnectionFactory"
-		recovery-interval="5" receive-timeout="1" reply-timeout="1"
-		request-timeout="1" />
-	
+		request-destination="brq"
+		connection-factory="inboundConnectionFactory" recovery-interval="0"
+		receive-timeout="1" reply-timeout="1" />
+
 
 	<int:service-activator id="sorder-activator"
                                          ref="busMsgHandler1"

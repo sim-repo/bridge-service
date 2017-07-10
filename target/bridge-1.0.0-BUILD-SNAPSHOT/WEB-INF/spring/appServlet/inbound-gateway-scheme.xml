@@ -39,8 +39,8 @@
 	
 	<int-jms:inbound-gateway request-channel="channelBus"
 		request-destination="brq" connection-factory="inboundConnectionFactory"
-		recovery-interval="5" receive-timeout="1" reply-timeout="1"
-		request-timeout="1" />
+		recovery-interval="1" 
+		request-timeout="0" />
 	
 
 	<int:service-activator id="sorder-activator"

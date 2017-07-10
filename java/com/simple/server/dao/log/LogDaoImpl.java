@@ -22,7 +22,7 @@ public class LogDaoImpl extends ADao implements ILogDao{
 	@Override
 	public JdbcTemplate currentJDBCTemplate() throws Exception {
 		return appConfig.getLogJdbcTemplate();
-	}
+	}	
 
 	@Override
 	public List<IRec> readbyPK(IRec rec) throws Exception {

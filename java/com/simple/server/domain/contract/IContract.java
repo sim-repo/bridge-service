@@ -38,6 +38,10 @@ public interface IContract extends Serializable {
 	void setPublisherId(EndpointType publisherId);
 	EndpointType getSubscriberId();
 	void setSubscriberId(EndpointType subscriberId);
+	String getSubscriberHandler();
+	void setSubscriberHandler(String subscriberHandler);
+	String getSubscriberStoreClass();
+	void setSubscriberStoreClass(String subscriberStoreClass);
 	EndpointType getSenderId();
 	void setSenderId(EndpointType senderId);
 	

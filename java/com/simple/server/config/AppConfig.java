@@ -1,5 +1,9 @@
 package com.simple.server.config;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.LogManager;
@@ -11,9 +15,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.stereotype.Service;
 
+import com.simple.server.dao.IDao;
 import com.simple.server.dao.log.ILogDao;
-import com.simple.server.dao.nav.NavDaoImpl;
+import com.simple.server.dao.nav.INavDao;
+import com.simple.server.domain.IRec;
 import com.simple.server.domain.contract.IContract;
+import com.simple.server.domain.contract.PubErrRouting;
+import com.simple.server.domain.contract.PubSuccessRouting;
+import com.simple.server.domain.contract.SubRouting;
 import com.simple.server.factory.ContractRecFactory;
 import com.simple.server.factory.PhaserRunner;
 import com.simple.server.factory.QueueFactory;
@@ -26,6 +35,9 @@ import com.simple.server.service.sender.Sender;
 @Scope("singleton")
 public class AppConfig {
 	
+	
+	@Autowired
+	public EndpointCfg endpointCfg;
 	
 	public final static String ACC = "SIMPLE\\jservice";
 	public final static String PSW = "j123Service";
@@ -40,16 +52,24 @@ public class AppConfig {
 	@Autowired
 	private MessageChannel channelSrvLog;	
 	@Autowired
-	private MessageChannel channelMonRep;
+	private MessageChannel channelMonRep;	
 	
 	
 	private LinkedBlockingQueue<String> queueDirty;
 	private LinkedBlockingQueue<IContract> queueRead;
 	private LinkedBlockingQueue<IContract> queueWrite;    
 	private LinkedBlockingQueue<IContract> queuePub;      	
-	private LinkedBlockingQueue<IContract> queueSub;
+	private LinkedBlockingQueue<IContract> queueSub;	
 	private LinkedBlockingQueue<IContract> queueLog;
 	private LinkedBlockingQueue<IContract> queueMon;
+	
+	private LinkedBlockingQueue<IRec> queueNAV;
+	
+	
+	
+	private Map<String, List<PubErrRouting>> routesPubErr = new ConcurrentHashMap<String, List<PubErrRouting>>();
+	private Map<String, List<PubSuccessRouting>> routesPubSuccess = new ConcurrentHashMap<String, List<PubSuccessRouting>>();	
+	private Map<String, List<SubRouting>> routesSubs = new ConcurrentHashMap<String, List<SubRouting>>();
 	
 	private static final Logger logger = LogManager.getLogger(AppConfig.class);
 	
@@ -67,6 +87,8 @@ public class AppConfig {
 	@Autowired
 	private SessionFactory navSessionFactory;
 	
+	
+	
 	@Autowired
 	private ContractRecFactory contractRecFactory;
 	
@@ -77,14 +99,16 @@ public class AppConfig {
 	private QueueFactory queueFactory;
 	
 	@Autowired
-	private NavDaoImpl navDao;
+	private IDao myDao;
+	
+	@Autowired
+	private INavDao navDao;
 	
 	@Autowired
 	private ILogDao logDao;	
 	
-	
 	@Autowired
-	private IService navService;
+	private IService myService;
 	
 	@Autowired
 	private IService logService;	
@@ -97,6 +121,10 @@ public class AppConfig {
 		
 	public Sender getSender() {
 		return sender;
+	}
+	
+	public EndpointCfg getEndpointCfg() {
+		return endpointCfg;
 	}
 
 	public JdbcTemplate getNavJdbcTemplate() {
@@ -115,13 +143,16 @@ public class AppConfig {
 		return navSessionFactory;
 	}	
 
-
-	public NavDaoImpl getNavDao() {
+	public INavDao getNavDao() {
 		return navDao;
 	}
 
 	public ILogDao getLogDao() {
 		return logDao;
+	}
+	
+	public IDao getMyDao() {
+		return myDao;
 	}
 
 	public ContractRecFactory getContractRecFactory() {
@@ -132,9 +163,8 @@ public class AppConfig {
 		return serviceFactory;
 	}
 	
-
-	public IService getNavService() {
-		return navService;
+	public IService getMyService() {
+		return myService;
 	}
 
 	public IService getLogService() {
@@ -184,6 +214,63 @@ public class AppConfig {
 	public LinkedBlockingQueue<IContract> getQueueMon() {
 		return queueMon;
 	}
+	
+	
+	
+	public LinkedBlockingQueue<IRec> getQueueNAV() {
+		return queueNAV;
+	}
+
+	public List<PubErrRouting> getRoutesPubErr(String eventId, EndpointType publisherId) {		
+		if(this.routesPubErr.containsKey(eventId+publisherId))
+			return this.routesPubErr.get(eventId+publisherId);
+		return null;		
+	}
+
+	public void setRoutesPubErr(String eventId, EndpointType publisherId, PubErrRouting routesPubErr) {						
+		List<PubErrRouting> list = null;
+		if(this.routesPubErr.containsKey(eventId+publisherId)){			
+			list = this.routesPubErr.get(eventId+publisherId);			
+		}else{			
+			list = new ArrayList();			
+		}	
+		list.add(routesPubErr);
+		this.routesPubErr.put(eventId+publisherId, list);
+	}
+
+	public List<PubSuccessRouting> getRoutesPubSuccess(String eventId, EndpointType publisherId) {		
+		if(this.routesPubSuccess.containsKey(eventId+publisherId))
+			return this.routesPubSuccess.get(eventId+publisherId);
+		return null;
+	}
+
+	public void setRoutesPubSuccess(String eventId, EndpointType publisherId, PubSuccessRouting routesPubSuccess) {						
+		List<PubSuccessRouting> list = null;
+		if(this.routesPubSuccess.containsKey(eventId+publisherId)){
+			list = this.routesPubSuccess.get(eventId+publisherId);			
+		}else{			
+			list = new ArrayList();		
+		}		
+		list.add(routesPubSuccess);
+		this.routesPubSuccess.put(eventId+publisherId, list);
+	}
+
+	public List<SubRouting> getRoutesSubs(String eventId, EndpointType senderId) {		
+		if(this.routesSubs.containsKey(eventId+senderId))
+			return this.routesSubs.get(eventId+senderId);
+		return null;
+	}
+
+	public void setRoutesSubs(String eventId, EndpointType senderId, SubRouting routesSubs) {				
+		List<SubRouting> list = null;
+		if(this.routesSubs.containsKey(eventId+senderId)){
+			list = this.routesSubs.get(eventId+senderId);			
+		}else{			
+			list = new ArrayList();			
+		}	
+		list.add(routesSubs);
+		this.routesSubs.put(eventId+senderId, list);
+	}
 
 	public QueueFactory getQueueFactory() {
 		return queueFactory;
@@ -223,5 +310,9 @@ public class AppConfig {
 	
 	public void initMon(int size){
 		this.queueMon= new LinkedBlockingQueue<>(size);
+	}
+	
+	public void initNav(int size){
+		this.queueNAV= new LinkedBlockingQueue<>(size);
 	}
 }

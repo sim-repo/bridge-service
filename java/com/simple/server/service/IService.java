@@ -2,12 +2,14 @@ package com.simple.server.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.transaction.Transactional;
 
 import com.simple.server.config.AppConfig;
 import com.simple.server.config.MiscType;
 import com.simple.server.dao.IDao;
+import com.simple.server.domain.IRec;
 import com.simple.server.domain.contract.IContract;
 
 public interface IService {
@@ -19,6 +21,12 @@ public interface IService {
 	void insert(IContract msg) throws Exception;
 	@Transactional
 	void insert(String sql) throws Exception;
+	@Transactional
+	void qInsert(List<IContract> list) throws Exception;
+	@Transactional
+	void qInsert(IContract msg) throws Exception;
+	@Transactional
+	void qInsert(String sql) throws Exception;
 	@Transactional
 	void insertAsIs(IContract msg) throws Exception;
 	@Transactional

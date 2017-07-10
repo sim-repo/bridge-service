@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import com.simple.server.config.AppConfig;
 import com.simple.server.config.MiscType;
+import com.simple.server.dao.IDao;
 import com.simple.server.domain.IRec;
 import com.simple.server.domain.contract.IContract;
 import com.simple.server.util.ObjectConverter;
@@ -19,14 +22,45 @@ public abstract class AService implements IService {
 	public AppConfig getAppConfig() throws Exception {
 		return appConfig;
 	}
+		
+	@Override
+	public IDao getDao() throws Exception {		
+		return getAppConfig().getMyDao();
+	}
+
+
+	@Override	
+	public void qInsert(IContract msg) throws Exception {
+		if (msg.getIsDirectInsert())
+			insertAsIs(msg);
+		else {			
+			IRec rec = getAppConfig().getContractRecFactory().newRec(msg);
+			getAppConfig().getEndpointCfg().getQueue(msg.getEndPointId().toValue()).add(rec);										
+		}
+	}
+	
 
 	@Override
+	public void qInsert(String sql) throws Exception {
+		getDao().insert(sql);
+	}
+
+	@Override
+	public void qInsert(List<IContract> list) throws Exception {	
+		List<IRec> recs = getAppConfig().getContractRecFactory().newRecList(list); 
+		// getDao().insert(recs); temporary commented
+		this.getDaoQueue().addAll(recs);
+	}
+
+	
+	
+	@Override	
 	public void insert(IContract msg) throws Exception {
 		if (msg.getIsDirectInsert())
 			insertAsIs(msg);
-		else {
-			IRec rec = getAppConfig().getContractRecFactory().newRec(msg);
-			getDao().insert(rec);
+		else {			
+			IRec rec = getAppConfig().getContractRecFactory().newRec(msg);								
+			getDao().insert(rec);			
 		}
 	}
 	
@@ -37,9 +71,9 @@ public abstract class AService implements IService {
 	}
 
 	@Override
-	public void insert(List<IContract> list) throws Exception {
-		List<IRec> recs = getAppConfig().getContractRecFactory().newRecList(list);
-		getDao().insert(recs);
+	public void insert(List<IContract> list) throws Exception {	
+		List<IRec> recs = getAppConfig().getContractRecFactory().newRecList(list); 
+		getDao().insert(recs);		
 	}
 
 	@Override

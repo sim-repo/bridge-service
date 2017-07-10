@@ -1,8 +1,5 @@
 package com.simple.server.config;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
@@ -10,9 +7,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.simple.server.factory.TaskRunner;
-import com.simple.server.statistics.PerfomancerStat;
-import com.simple.server.statistics.time.Timing;
-import com.simple.server.task.PubTask;
 
 @Component
 public class PostInit implements ApplicationListener<ContextRefreshedEvent> {
@@ -44,6 +38,9 @@ public class PostInit implements ApplicationListener<ContextRefreshedEvent> {
 	@Value("${queueSizeMon.int.property :1}")
 	private int queueSizeMon;
 	
+	@Value("${queueSizeNav.int.property :100}")
+	private int queueSizeNav;
+	
 	@Override
 	public void onApplicationEvent(final ContextRefreshedEvent event) {
 		
@@ -54,6 +51,7 @@ public class PostInit implements ApplicationListener<ContextRefreshedEvent> {
 		  appConfig.initSub(queueSizeSub);
 		  appConfig.initLog(queueSizeLog);
 		  appConfig.initMon(queueSizeMon);
+		  appConfig.initNav(queueSizeNav);
 		  
 		  taskRunner.initProcessing();		 
  

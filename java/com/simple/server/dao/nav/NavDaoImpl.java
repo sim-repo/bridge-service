@@ -5,13 +5,13 @@ import java.util.List;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 
 import com.simple.server.dao.ADao;
 import com.simple.server.domain.IRec;
 import com.simple.server.domain.nav.INavRec;
 
-@Service("navDao")
+@Repository("navDao")
 public class NavDaoImpl extends ADao implements INavDao{
 	
 	@Override
@@ -23,6 +23,7 @@ public class NavDaoImpl extends ADao implements INavDao{
 	public JdbcTemplate currentJDBCTemplate() throws Exception {
 		return appConfig.getNavJdbcTemplate();
 	}
+	
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -37,6 +38,5 @@ public class NavDaoImpl extends ADao implements INavDao{
 			    .add( Restrictions.like("JUUID", navRec.getJuuid()) )			    
 			    .list();
 		return list;
-	}	
-	
+	}
 }

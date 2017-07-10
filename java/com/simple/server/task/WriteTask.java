@@ -63,20 +63,13 @@ public class WriteTask extends ATask {
 	
 	@Override
 	public void task() throws Exception {
+		
+		try{
 		if (getAppConfig() .getQueueWrite().drainTo(list, MAX_NUM_ELEMENTS) == 0) {
             list.add(getAppConfig() .getQueueWrite().take());
-        }
-                       
-    	Thread.currentThread().sleep(Timing.getTimeMaxSleep());
-                                 	    	 	
-    	
-		IService service = getAppConfig().getServiceFactory().getService(EndpointType.NAV);  //add
-    	
-    	while (basePhaser.getCurrNumPhase() != HqlStepsType.START.ordinal()) {
-			if (getAppConfig().getQueueWrite().size() > 0)
-				getAppConfig().getQueueWrite().drainTo(list, MAX_NUM_ELEMENTS);
-		}
-    		
+        }                         		
+
+		
 		List<ErrPubMsg> errPubList = null;
 		List<SuccessPubMsg> successPubList = null;
 		List<PubErrRouting> pubRoutes = null;
@@ -87,9 +80,9 @@ public class WriteTask extends ATask {
 		List<ErrDefMsg> errDefList = null;
 		
 		
-		service.insert(list); //add
+		//service.insert(list); //add
+		System.out.println("WriteTask :  " + list.size());
 		
-		/*
         for(IContract msg: list){
         	        	
         	switch(msg.getOperationType()){
@@ -98,7 +91,7 @@ public class WriteTask extends ATask {
 	        					errPubList = new ArrayList();
 	        				if(successPubList == null)
 	        					successPubList = new ArrayList();	        				
-	        				setPub( msg, errPubList, pubRoutes );  
+	        			//	setPub( msg, errPubList, pubRoutes );  
 	        				break;	        	
 	        	}
 	        	case SUB: {
@@ -122,7 +115,7 @@ public class WriteTask extends ATask {
 							String.format("msg.[juuid]: < %s > - endpoint id is null  < %s > ", msg.getJuuid()));
 				}
 				
-				//IService service = getAppConfig().getServiceFactory().getService(msg.getEndPointId());
+				IService service = getAppConfig().getMyService();
 	        	if(msg.getIsDirectInsert())
 	        		service.insertAsIs(msg);
 	        	else
@@ -143,14 +136,17 @@ public class WriteTask extends ATask {
         if(errSubList != null && errSubList.size() > 0)
         	sendError(errSubList);
         
-        if(errDefList != null && errDefList.size() > 0)
+        if(errDefList != null && errDefList.size() > 0);
         	sendError(errDefList);
         
         errPubList = null;
         errSubList = null;
         errDefList = null;
-        */
-        list.clear();                
+		}catch(Exception e){
+			
+		}finally{
+			list.clear();
+		}
 	}	      
 	
 	

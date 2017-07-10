@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.simple.server.config.AppConfig;
+import com.simple.server.dao.nav.NavDaoTaskImpl;
 import com.simple.server.lifecycle.BasePhaser;
 import com.simple.server.lifecycle.HqlStepsType;
 import com.simple.server.mediators.CommandType;
@@ -28,8 +29,9 @@ import com.simple.server.task.StatTask;
 import com.simple.server.task.SubTask;
 import com.simple.server.task.WriteTask;
 import com.simple.server.task.ITask;
+import com.simple.server.task.LoadConfigTask;
 import com.simple.server.task.LogSenderTask;
-import com.simple.server.task.PubTask;
+import com.simple.server.task.OptimPubTask;
 
 @Service("taskRunner")
 @Scope("singleton")
@@ -108,13 +110,17 @@ public class TaskRunner  {
   
     public void initProcessing() {        
         	try {		        		 
+        		newRunTask(appConfig.getMediator(), LoadConfigTask.class, 1);
         		newRunTask(appConfig.getMediator(), DispatcherTask.class, 1);
         		newRunTask(appConfig.getMediator(), ReadTask.class, 1);
-        		newRunTask(appConfig.getMediator(), WriteTask.class, 4);
-        		newRunTask(appConfig.getMediator(), PubTask.class, 4);
+        		newRunTask(appConfig.getMediator(), WriteTask.class, 1);
+        		//newRunTask(appConfig.getMediator(), PubTask.class, 4);
+        		newRunTask(appConfig.getMediator(), OptimPubTask.class, 1);
         		newRunTask(appConfig.getMediator(), SubTask.class, 1);
         		newRunTask(appConfig.getMediator(), LogSenderTask.class, 1);
-        		newRunTask(appConfig.getMediator(), StatTask.class, 1);        	        		
+        		newRunTask(appConfig.getMediator(), StatTask.class, 1);        	            		        	        		
+        		newRunTask(appConfig.getMediator(), NavDaoTaskImpl.class, 1);
+        		
         		
         		for(Map.Entry<Class<ATask>, Integer> pair: classToRun.entrySet()){
         			Class<ATask> clazz = pair.getKey();

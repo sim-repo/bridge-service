@@ -22,19 +22,21 @@ import com.simple.server.domain.IRec;
 import com.simple.server.domain.UniRequest;
 import com.simple.server.domain.UniResult;
 import com.simple.server.domain.contract.IContract;
+import com.simple.server.statistics.time.Timing;
 import com.simple.server.util.ObjectConverter;
 
 public abstract class ADao implements IDao{
 
 	@Autowired
 	protected AppConfig appConfig;
-	
+
 	@Override
 	public void insert(List<IRec> list) throws Exception {
 		int count=0;
 		for(IRec rec: list){
 			try{							
-				currentSession().saveOrUpdate(rec);	
+				Thread.currentThread().sleep(Timing.TIME_MID_SLEEP);
+				currentSession().save(rec);	
 			}catch(SQLException e){
 				e.printStackTrace();
 			}			
@@ -59,8 +61,9 @@ public abstract class ADao implements IDao{
 	public void insertAsIs(List<IContract> list) throws Exception {
 		int count=0;
 		for(IContract msg: list){
-			try{							
-				currentSession().saveOrUpdate(msg);	
+			try{	
+				Thread.currentThread().sleep(Timing.TIME_MIN_SLEEP);
+				currentSession().save(msg);	
 			}catch(SQLException e){
 				e.printStackTrace();
 			}			
@@ -198,9 +201,9 @@ public abstract class ADao implements IDao{
 			}
 		}
 						
-		List<T> res = criteria.list();	
-		System.out.println(clazz+" res.size():"+res.size());
+		List<T> res = criteria.list();			
 		StringBuilder er = new StringBuilder();
+		System.out.println("bridge::ado.readbyCriteria"+res.size());
 		if (res.size()==0){
 			res = criteria.list();	
 		}			

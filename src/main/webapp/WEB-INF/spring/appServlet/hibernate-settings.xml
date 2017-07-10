@@ -119,6 +119,30 @@
     		 <property name="dataSource" ref="myDS"/>
 	</bean>
 	
+	
+	<bean id="navQueue" class="java.util.concurrent.LinkedBlockingQueue" >
+  		<constructor-arg type="int"><value>100</value></constructor-arg>
+	</bean>
+	
+	<bean id="llQueue" class="java.util.concurrent.LinkedBlockingQueue" >
+  		<constructor-arg type="int"><value>100</value></constructor-arg>
+	</bean>
+	
+	<bean id="endpointCfg" class="com.simple.server.config.EndpointCfg">			
+	 	<property name="sessionFactoryMap">
+			<map>
+				<entry key="NAV" value-ref="navSessionFactory"/>
+				<entry key="LOG" value-ref="logSessionFactory"/>				
+			</map>
+		</property> 
+		<property name="endpointQueueMap">
+			<map>
+				<entry key="NAV" value-ref="navQueue"/>
+				<entry key="LOG" value-ref="llQueue"/>				
+			</map>
+		</property> 	
+	</bean>
+	
 
 	<bean id="txManager"
 		class="org.springframework.orm.hibernate4.HibernateTransactionManager">

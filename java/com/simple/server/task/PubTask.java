@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.simple.server.config.AppConfig;
 import com.simple.server.config.ContentType;
 import com.simple.server.config.EndpointType;
@@ -31,7 +30,6 @@ import com.simple.server.http.HttpImpl;
 import com.simple.server.http.IHttp;
 import com.simple.server.mediators.CommandType;
 import com.simple.server.service.IService;
-import com.simple.server.statistics.time.Timing;
 import com.simple.server.util.DateConvertHelper;
 
 @Service("PubTask")
@@ -70,12 +68,7 @@ public class PubTask extends ATask {
 		if (getAppConfig().getQueuePub().drainTo(list, MAX_NUM_ELEMENTS) == 0) {
 			list.add(getAppConfig().getQueuePub().take());
 		}
-		Thread.currentThread().sleep(Timing.getTimeMaxSleep());
-		// while (basePhaser.getCurrNumPhase() != HqlStepsType.START.ordinal())
-		// {
-		// if (getAppConfig().getQueuePub().size() > 0)
-		// getAppConfig().getQueuePub().drainTo(list, MAX_NUM_ELEMENTS);
-		// }
+	
 
 		IService service = getAppConfig().getServiceFactory().getService(EndpointType.LOG);
 		List<PubErrRouting> pubErrRoutes = null;
@@ -132,12 +125,9 @@ public class PubTask extends ATask {
 								pubErrRoutes);
 						continue;
 					}
-
-					SubRouting subRoute = null;
-					for (IContract r : subRoutes) {
-						try {
-							subRoute = (SubRouting) r;
-
+					
+					for (SubRouting subRoute : subRoutes) {
+						try {							
 							if ((subRoute.getSubscriberStoreClass() == null
 									|| subRoute.getSubscriberStoreClass().equals(""))
 									&& (subRoute.getSubscriberHandler() == null
@@ -210,195 +200,143 @@ public class PubTask extends ATask {
 			list.clear();
 		}
 	}
-
-	private void sendErrors(List<ErrPubMsg> errList) {
-		for (ErrPubMsg err : errList) {
-			try {
-				if (err.getResponseURI() != null && !err.getResponseURI().isEmpty()) {
-					err.setResponseContentType(ContentType.ApplicationJson);
-					http.sendHttp(err, err.getResponseURI(), err.getResponseContentType(), false);
-				} else if (err.getStoreClass() != null && !err.getStoreClass().isEmpty()) {
+	
+	
+	
+	private void sendStatus(IContract msg,  String storeClass) {		
+		try {
+			msg.setResponseContentType(ContentType.ApplicationJson);
+			
+			if (msg.getResponseURI() != null && !msg.getResponseURI().isEmpty()) {					
+				http.sendHttp(msg, msg.getResponseURI(), msg.getResponseContentType(), false);										
+			} else 
+				if (storeClass != null && storeClass!="") {
 					IContract contract = null;
-					if (err.getClass().getName().equals(err.getStoreClass())) {
-						err.setIsDirectInsert(true);
-						err.setResponseContentType(ContentType.ApplicationJson);
-						contract = err;
+					if (msg.getClass().getName().equals(storeClass)) {
+						msg.setIsDirectInsert(true);						
+						contract = msg;
 					} else {
-						Class<IContract> clazz = (Class<IContract>) Class.forName(err.getStoreClass());
+						Class<IContract> clazz = (Class<IContract>) Class.forName(storeClass);
 						Constructor<IContract> ctor = clazz.getConstructor();
 						IContract instance = ctor.newInstance();
-						instance.setEndPointId(err.getSenderId());
+						instance.setEndPointId(msg.getSenderId());
 						instance.setIsDirectInsert(false);
-						instance.setResponseContentType(ContentType.ApplicationJson);
-						instance.copyFrom(err);
+						instance.setResponseContentType(msg.getResponseContentType());
+						instance.copyFrom(msg);
 						contract = instance;
 					}
 					appConfig.getQueueWrite().put(contract);
 				}
-				appConfig.getQueueLog().put(err);
-			} catch (Exception e) {
-				try {
-					ErrPubMsg newErr = new ErrPubMsg();
-					newErr.setErrorId(ErrorType.PubTask);
-					newErr.setOperationType(OperationType.PUB);
-					newErr.setResponseContentType(ContentType.ApplicationJson);
-					if (e.getCause() != null)
-						newErr.setDetails(String.format("%s: %s", e.getMessage(), e.getCause()));
-					else
-						newErr.setDetails(String.format("%s", e.getMessage()));
-					newErr.setEventId(err.getEventId());
-					newErr.setJuuid(err.getJuuid());
-					newErr.setSenderId(err.getSenderId());
-					newErr.setEndPointId(err.getSenderId());
-					newErr.setSubscriberId(err.getSubscriberId());
-					appConfig.getQueueLog().put(err);
-					appConfig.getQueueLog().put(newErr);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
+			appConfig.getQueueLog().put(msg);
+		} catch (Exception e) {
+			try {
+				ErrPubMsg newErr = new ErrPubMsg();
+				String logDatetime = DateConvertHelper.getCurDate();
+				setError(newErr, msg, msg.getSubscriberId(), logDatetime, e);					
+				appConfig.getQueueLog().put(msg);
+				appConfig.getQueueLog().put(newErr);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
 			}
+		}
+	}
+	
+	
+
+	private void sendErrors(List<ErrPubMsg> errList) {
+		for (ErrPubMsg err : errList) {			
+			sendStatus(err,err.getStoreClass());
 		}
 		errList = null;
 	}
+	
 
 	private void sendSuccess(List<SuccessPubMsg> successList) {
 		for (SuccessPubMsg success : successList) {
-			try {
-				if (success.getResponseURI() != null && !success.getResponseURI().isEmpty()) {
-					success.setResponseContentType(ContentType.ApplicationJson);
-					http.sendHttp(success, success.getResponseURI(), success.getResponseContentType(), false);
-				} else if (success.getStoreClass() != null && !success.getStoreClass().isEmpty()) {
-					IContract contract = null;
-					if (success.getClass().getName().equals(success.getStoreClass())) {
-						success.setIsDirectInsert(true);
-						success.setResponseContentType(ContentType.ApplicationJson);
-						contract = success;
-					} else {
-						Class<IContract> clazz = (Class<IContract>) Class.forName(success.getStoreClass());
-						Constructor<IContract> ctor = clazz.getConstructor();
-						IContract instance = ctor.newInstance();
-						instance.setEndPointId(success.getSenderId());
-						instance.setIsDirectInsert(false);
-						instance.setResponseContentType(ContentType.ApplicationJson);
-						instance.copyFrom(success);
-						contract = instance;
-					}
-					appConfig.getQueueWrite().put(contract);
-				}
-				appConfig.getQueueLog().put(success);
-			} catch (Exception e) {
-				try {
-					ErrPubMsg newErr = new ErrPubMsg();
-					newErr.setErrorId(ErrorType.PubTask);
-					if (e.getCause() != null)
-						newErr.setDetails(String.format("%s: %s", e.getMessage(), e.getCause()));
-					else
-						newErr.setDetails(String.format("%s", e.getMessage()));
-					newErr.setEventId(success.getEventId());
-					newErr.setJuuid(success.getJuuid());
-					newErr.setSenderId(success.getSenderId());
-					newErr.setEndPointId(success.getSenderId());
-					newErr.setSubscriberId(success.getSubscriberId());
-					appConfig.getQueueLog().put(success);
-					appConfig.getQueueLog().put(newErr);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-			}
+			sendStatus(success,success.getStoreClass());
 		}
 		successList = null;
 	}
+	
+		
+	private void setError(ErrPubMsg err, IContract msg, EndpointType subscriber, String logDatetime, Exception e){
+		err.setLogDatetime(logDatetime);
+		err.setErrorId(ErrorType.PubTask);
+		err.setOperationType(OperationType.PUB);
+		err.setEventId(msg.getEventId());
+		err.setJuuid(msg.getJuuid());
+		err.setSenderId(msg.getSenderId());
+		err.setEndPointId(msg.getSenderId());
+		err.setSubscriberId(subscriber);
+		
+		if (e.getCause() != null)
+			err.setDetails(String.format("%s: %s", e.getMessage(), e.getCause()));
+		else
+			err.setDetails(String.format("%s", e.getMessage()));
+	}
+	
 
-	private void collectError(List<ErrPubMsg> list, IContract msg, SubRouting subRouting, Exception e,
-			List<PubErrRouting> routings) {
+	private void collectError(List<ErrPubMsg> list, IContract msg, SubRouting subRouting, Exception e, List<PubErrRouting> routings) {
 		ErrPubMsg err = null;
 		String logDatetime = DateConvertHelper.getCurDate();
 
 		if (routings == null) {
-			err = new ErrPubMsg();
-			err.setErrorId(ErrorType.PubTask);
-			err.setOperationType(OperationType.PUB);
-			if (e.getCause() != null)
-				err.setDetails(String.format("%s: %s", e.getMessage(), e.getCause()));
-			else
-				err.setDetails(String.format("%s", e.getMessage()));
-			err.setEventId(msg.getEventId());
-			err.setJuuid(msg.getJuuid());
-			err.setSenderId(msg.getSenderId());
-			err.setEndPointId(msg.getSenderId());
-			if (subRouting != null) {
-				err.setSubscriberId(subRouting.getSubscriberId());
-			}
-			err.setLogDatetime(logDatetime);
+			err = new ErrPubMsg();		
+			setError(err, msg, subRouting.getSubscriberId(), logDatetime, e);			
 			list.add(err);
-
-		} else {
-			for (PubErrRouting routing : routings) {
-				err = new ErrPubMsg();
-				err.setErrorId(ErrorType.PubTask);
-				err.setOperationType(OperationType.PUB);
-				if (e.getCause() != null)
-					err.setDetails(String.format("%s: %s", e.getMessage(), e.getCause()));
-				else
-					err.setDetails(String.format("%s", e.getMessage()));
-				err.setEventId(msg.getEventId());
-				err.setJuuid(msg.getJuuid());
-				err.setSenderId(msg.getSenderId());
-				err.setEndPointId(msg.getSenderId());
-
-				if (routing.getPublisherHandler() != null && routing.getPublisherHandler() != "")
-					err.setResponseURI(routing.getPublisherHandler());
-				if (routing.getPublisherStoreClass() != null && routing.getPublisherStoreClass() != "")
-					err.setStoreClass(routing.getPublisherStoreClass());
-
-				if (subRouting != null) {
-					err.setSubscriberId(subRouting.getSubscriberId());
-					err.setSubscriberHandler(subRouting.getSubscriberHandler());
-				}
-				err.setLogDatetime(logDatetime);
-
-				list.add(err);
-			}
+			return;
 		}
+		
+		for (PubErrRouting routing : routings) {
+			err = new ErrPubMsg();	
+			setError(err, msg, subRouting.getSubscriberId(), logDatetime, e);
+							
+			if (routing.getPublisherHandler() != null && routing.getPublisherHandler() != "")
+				err.setResponseURI(routing.getPublisherHandler());
+			
+			if (routing.getPublisherStoreClass() != null && routing.getPublisherStoreClass() != "")
+				err.setStoreClass(routing.getPublisherStoreClass());
+			
+			if (subRouting != null) 
+				err.setSubscriberHandler(subRouting.getSubscriberHandler());
+				
+			list.add(err);
+		}		
 	}
 
-	private void collectSuccess(List<SuccessPubMsg> list, IContract msg, SubRouting subRouting,
-			List<PubSuccessRouting> routings) {
+	
+	private void setSuccess(SuccessPubMsg success, IContract msg, SubRouting subRouting, String logDatetime){
+		success.setResponseContentType(ContentType.ApplicationJson);			
+		success.setEventId(msg.getEventId());
+		success.setJuuid(msg.getJuuid());
+		success.setSenderId(msg.getSenderId());
+		success.setEndPointId(msg.getSenderId());
+		success.setLogDatetime(logDatetime);
+		if (subRouting != null) {
+			success.setSubscriberHandler(subRouting.getSubscriberHandler());
+			success.setSubscriberStoreClass(subRouting.getSubscriberStoreClass());
+			success.setSubscriberId(subRouting.getSubscriberId());
+		}		
+	}
+	
+	
+	private void collectSuccess(List<SuccessPubMsg> list, IContract msg, SubRouting subRouting, List<PubSuccessRouting> routings) {
 		SuccessPubMsg success = null;
 		String logDatetime = DateConvertHelper.getCurDate();
 
 		if (routings == null || routings.size() == 0) {
 			success = new SuccessPubMsg();
-			success.setEventId(msg.getEventId());
-			success.setJuuid(msg.getJuuid());
-			success.setSenderId(msg.getSenderId());
-			success.setEndPointId(msg.getSenderId());
-			success.setResponseContentType(ContentType.ApplicationJson);
-			if (subRouting != null) {
-				success.setSubscriberHandler(subRouting.getSubscriberHandler());
-				success.setSubscriberStoreClass(subRouting.getSubscriberStoreClass());
-				success.setSubscriberId(subRouting.getSubscriberId());
-			}
-			success.setLogDatetime(logDatetime);
+			setSuccess(success, msg, subRouting, logDatetime);									
 			list.add(success);
-		} else {
-			for (PubSuccessRouting routing : routings) {
-				success = new SuccessPubMsg();
-				success.setResponseContentType(ContentType.ApplicationJson);
-				success.setEventId(msg.getEventId());
-				success.setJuuid(msg.getJuuid());
-				success.setSenderId(msg.getSenderId());
-				success.setEndPointId(msg.getSenderId());
-				success.setResponseURI(routing.getPublisherHandler());
-				success.setStoreClass(routing.getPublisherStoreClass());
-				success.setLogDatetime(logDatetime);
-				if (subRouting != null) {
-					success.setSubscriberId(subRouting.getSubscriberId());
-					success.setSubscriberHandler(subRouting.getSubscriberHandler());
-					success.setSubscriberStoreClass(subRouting.getSubscriberStoreClass());
-				}
-				list.add(success);
-			}
+			return;
+		}
+		
+		for (PubSuccessRouting routing : routings) {
+			success = new SuccessPubMsg();
+			setSuccess(success, msg, subRouting, logDatetime);				
+			success.setResponseURI(routing.getPublisherHandler());
+			success.setStoreClass(routing.getPublisherStoreClass());												
+			list.add(success);
 		}
 	}
 }

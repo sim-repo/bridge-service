@@ -15,6 +15,7 @@ import com.simple.server.domain.contract.IncomingBufferMsg;
 import com.simple.server.domain.contract.TagRequestMsg;
 import com.simple.server.domain.contract.UniResultMsg;
 import com.simple.server.domain.uni.IncomingBuffer;
+import com.simple.server.statistics.time.Timing;
 
 /**
  * Фабрика для генераций объектов IContract<->IRec
@@ -102,6 +103,7 @@ public class ContractRecFactory {
 	public List<IRec> newRecList(List<IContract> list) throws Exception {
 		List<IRec> res = new ArrayList<IRec>();
 		for (IContract msg : list) {
+			Thread.currentThread().sleep(Timing.getTimeMaxSleep());
 			IRec rec = newRec(msg);
 			res.add(rec);
 		}
