@@ -185,7 +185,8 @@
 				<value>hbm/UniMsg.hbm.xml</value>	
 								
 				<value>hbm/SessionFactories.hbm.xml</value>
-				<value>hbm/JDBCTemplates.hbm.xml</value>																				
+				<value>hbm/JDBCTemplates.hbm.xml</value>	
+				<value>hbm/TimeoutPolicies.hbm.xml</value>																			
 			</list>
 		</property>		
 	</bean>	

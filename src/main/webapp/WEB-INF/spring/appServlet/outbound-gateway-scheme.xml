@@ -23,7 +23,7 @@
 		<property name="targetConnectionFactory">
 			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
 				<property name="brokerURL" value="tcp://localhost:61616"/>	
-				<!-- <property name="trustAllPackages" value="true"/> -->	
+				 <property name="trustAllPackages" value="true"/> 	
 			</bean>
 		</property>
 		<property name="sessionCacheSize" value="10"/>

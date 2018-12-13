@@ -22,6 +22,7 @@ import com.simple.server.dao.endpoint.IEndpointDao;
 import com.simple.server.dao.endpoint.EndpointDaoImpl;
 import com.simple.server.dao.log.ILogDao;
 import com.simple.server.domain.contract.IContract;
+import com.simple.server.domain.log.LogTimeoutPolicies;
 import com.simple.server.factory.ContractRecFactory;
 import com.simple.server.factory.PhaserRunner;
 import com.simple.server.factory.QueueFactory;
@@ -31,6 +32,7 @@ import com.simple.server.service.IService;
 import com.simple.server.service.sender.Sender;
 
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jms.connection.CachingConnectionFactory;
 import org.springframework.orm.hibernate4.LocalSessionFactoryBean;
 import org.springframework.context.ApplicationContext;
 
@@ -56,6 +58,7 @@ public class AppConfig {
 	private static Map<String, JdbcTemplate> jdbcTemplates = new HashMap();
 	ConcurrentHashMap<String, String> sessionFactoriesString= new ConcurrentHashMap<String, String>();
 	
+	public LogTimeoutPolicies timeoutPolicies = new LogTimeoutPolicies();
 	
 	private String serviceId;
 	
@@ -122,7 +125,6 @@ public class AppConfig {
 		
 	
 
-	
 	
 	
 	public Sender getSender() {

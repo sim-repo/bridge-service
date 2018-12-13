@@ -18,6 +18,7 @@ import com.simple.server.domain.contract.IContract;
 import com.simple.server.domain.contract.RedirectRouting;
 import com.simple.server.domain.log.LogJDBCTemplate;
 import com.simple.server.domain.log.LogSessionFactory;
+import com.simple.server.domain.log.LogTimeoutPolicies;
 import com.simple.server.mediators.CommandType;
 
 
@@ -55,6 +56,7 @@ public class LoadConfigTask  extends ATask {
     
 		List<IContract> res = null;
 		RedirectRouting redirect = null;
+		List<IContract> res3 = null;
 		
 		setDeactivateMySelfAfterTaskDone(true);
 		
@@ -62,14 +64,17 @@ public class LoadConfigTask  extends ATask {
 			
 		
 		try {
-		
+			System.out.println(">>>> BRIDGE-SERVICE::::LOADING CONFIG >>>>");
+			
 			//TODO logSessionFactory
 			List<IRec> sessionFactories = appConfig.getLogService().readAll(appConfig.LOG_ENDPOINT_NAME, LogSessionFactory.class);
 			List<IRec> jdbcTemplates = appConfig.getLogService().readAll(appConfig.LOG_ENDPOINT_NAME, LogJDBCTemplate.class);
+			List<IRec> timeoutPolicies = appConfig.getLogService().readAll(appConfig.LOG_ENDPOINT_NAME, LogTimeoutPolicies.class);
 			
 						
 			
 			if(sessionFactories != null) {
+				System.out.println("sessionFactories size: "+sessionFactories.size());
 				for(IRec rec: sessionFactories) {
 					LogSessionFactory sf = (LogSessionFactory)rec;
 					appConfig.setSessionFactories(sf.getEndpointId(), sf.getStrSessionFactory());					
@@ -77,11 +82,30 @@ public class LoadConfigTask  extends ATask {
 			}
 			
 			if(jdbcTemplates != null) {
+				System.out.println("jdbcTemplates size: "+jdbcTemplates.size());
 				for(IRec rec: jdbcTemplates) {
 					LogJDBCTemplate template = (LogJDBCTemplate)rec;
 					appConfig.setJdbcTemplates(template.getEndpointId(), template.getStrJdbcTemplate());					
 				}
 			}
+			
+			if(timeoutPolicies != null) {
+				System.out.println("timeoutPolicies size: "+timeoutPolicies.size());
+				for(IRec rec: timeoutPolicies) {
+					appConfig.timeoutPolicies = (LogTimeoutPolicies)rec;		
+					System.out.println(String.format("timeout: %s %s %s %s %s %s", 
+							appConfig.timeoutPolicies.getFrontSyncReadTimeout(), 
+							appConfig.timeoutPolicies.getFrontSyncConnectionRequestTimeout(),
+							appConfig.timeoutPolicies.getFrontSyncConnectionTimeout(),
+							appConfig.timeoutPolicies.getBackAsyncReadTimeout(),
+							appConfig.timeoutPolicies.getBackAsyncConnectionTimeout(),
+							appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout()
+							));
+				}
+			}		
+			
+			System.out.println("<<<< BRIDGE-SERVICE::::LOADING CONFIG COMPLETE <<<<<");
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}		      			

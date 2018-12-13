@@ -87,12 +87,23 @@ public class PubTask extends ATask {
 		List<SuccessPubMsg> successList = new ArrayList();
 		List<SubRouting> subRoutes = null;
 		String logDatetime = DateConvertHelper.getCurDate();
+		IContract gmsg = null;
+		SubRouting gsubRoute = null;
 		try {
 			for (IContract msg : list) {
 				try {
+					
+					gmsg = msg;
 					if (msg.getPublisherId()==null || msg.getPublisherId().equals("")) {
 						msg.setPublisherId(msg.getSenderId());
 					}
+					
+					logger.info(
+							String.format("[PubTask] [tic-tac] - %s : %s : %s", 
+								logDatetime, 						
+								msg.getEventId(), 
+								msg.getJuuid()									
+							));	
 
 				
 					Map<String, Object> map = new HashMap();
@@ -209,7 +220,8 @@ public class PubTask extends ATask {
 					for (IContract r : subRoutes) {
 						try {
 							subRoute = (SubRouting) r;
-
+							
+							gsubRoute = subRoute;
 							if ((subRoute.getSubscriberStoreClass() == null
 									|| subRoute.getSubscriberStoreClass().equals(""))
 									&& (subRoute.getSubscriberHandler() == null
@@ -280,6 +292,9 @@ public class PubTask extends ATask {
 						catch (Exception e) {							
 							this.collectError(errList, msg, subRoute, new Exception(e.getMessage()), pubErrRoutes, false);
 						}
+						catch (Error e) {
+							this.collectError(errList, gmsg, gsubRoute, new Exception(e.getMessage()), pubErrRoutes, true);
+						} 
 					}
 				} 
 				catch (JDBCException e) {
@@ -298,10 +313,18 @@ public class PubTask extends ATask {
 					else	
 						this.collectError(errList, msg, null, new Exception(e.getMessage()), pubErrRoutes, false);
 				}
+				catch (Error e) {				
+					if(subRoutes != null) {
+						for (SubRouting r : subRoutes) 
+							this.collectError(errList, msg, r, new Exception(e.getMessage()), pubErrRoutes, false);						
+					}
+					else	
+						this.collectError(errList, msg, null, new Exception(e.getMessage()), pubErrRoutes, false);
+				} 
 			}
-		} catch (Exception e) {
-			// exception in collectError
-			// TODO Exception to log
+			
+		} catch (Error e) {				
+				this.collectError(errList, gmsg, gsubRoute, new Exception(e.getMessage()), pubErrRoutes, true);
 		} finally {
 			sendErrors(errList);
 			sendSuccess(successList);

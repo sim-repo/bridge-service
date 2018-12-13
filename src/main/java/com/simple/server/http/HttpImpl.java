@@ -1,6 +1,7 @@
 
 package com.simple.server.http;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -9,7 +10,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-
 import com.simple.server.config.AppConfig;
 import com.simple.server.config.ContentType;
 import com.simple.server.util.HttpNotFoundException;
@@ -18,13 +18,8 @@ import com.simple.server.util.ObjectConverter;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
-import org.apache.commons.net.util.Base64;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
@@ -44,8 +39,13 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+
 public class HttpImpl implements IHttp {
 
+	@Autowired
+	private AppConfig appConfig;
+	
+	
 	private static final Logger logger = LogManager.getLogger(HttpImpl.class);
 	
 	@Override
@@ -81,6 +81,7 @@ public class HttpImpl implements IHttp {
 		}
 		post(converted, url, sContentType, contentType,  useAuth, msgId);
 	}
+	
 
 	public void post(String body, String url, String sContentType, ContentType contentType, Boolean useAuth, String msgId) throws Exception {
 		
@@ -92,9 +93,9 @@ public class HttpImpl implements IHttp {
 			URI uri = new URI(url);			
 												
 			HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
-		    // httpRequestFactory.setConnectionRequestTimeout(5000);
-			httpRequestFactory.setConnectTimeout(5000);
-			httpRequestFactory.setReadTimeout(20000);
+		     httpRequestFactory.setConnectionRequestTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout());
+			 httpRequestFactory.setConnectTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionTimeout());
+			 httpRequestFactory.setReadTimeout(appConfig.timeoutPolicies.getBackAsyncReadTimeout());
 			
 		    RestTemplate restTemplate = new RestTemplate(httpRequestFactory);		        
 			HttpEntity<String> entity = null;
@@ -110,6 +111,7 @@ public class HttpImpl implements IHttp {
 		logger.debug(String.format("[HttpImpl] [OK] %s %s , thread id: %s , thread name:  %s", url, msgId, Thread.currentThread().getId(), Thread.currentThread().getName()));
 	}
 
+	
 	@SuppressWarnings("all")
 	public void postNTLM(String body, String url, String contentType, String msgId) throws Exception {
 
@@ -130,7 +132,12 @@ public class HttpImpl implements IHttp {
 
 			httpPost.addHeader("Content-Type", contentType);
 
-			final RequestConfig params = RequestConfig.custom().setConnectTimeout(5000).setSocketTimeout(20000).build();
+			final RequestConfig params = RequestConfig.custom()
+					.setConnectTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionTimeout())
+					.setConnectionRequestTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout())
+					.build();
+			
+			
 			httpPost.setConfig(params);
 
 			//StringEntity entity = new StringEntity(body);
@@ -149,7 +156,7 @@ public class HttpImpl implements IHttp {
 
 			localContext.setAttribute(ClientContext.CREDS_PROVIDER, credsProvider);			
 			HttpResponse response = httpclient.execute(httpPost, localContext);
-
+			
 			checkHttpResonseStatusCode(url, response.getStatusLine().getStatusCode());
 						
 			if (response.getEntity() != null) {
