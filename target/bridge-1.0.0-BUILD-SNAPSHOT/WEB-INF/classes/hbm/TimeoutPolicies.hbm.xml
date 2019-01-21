@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="com.simple.server.domain.log">
+						
+	<class name="LogTimeoutPolicies" table="[timeout policies]">		
+		<id name="id" column="[id]">
+			<generator class="native" />
+		</id>
+		
+		<property name="frontSyncReadTimeout" column="[front_sync_read_timeout]" />
+		<property name="frontSyncConnectionRequestTimeout" column="[front_sync_connection_request_timeout]" />
+		<property name="frontSyncConnectionTimeout" column="[front_sync_connection_timeout]"/>		
+		
+		
+		<property name="backAsyncReadTimeout" column="[back_async_read_timeout]" />
+		<property name="backAsyncConnectionRequestTimeout" column="[back_async_connection_request_timeout]" />
+		<property name="backAsyncConnectionTimeout" column="[back_async_connection_timeout]"/>	
+											
+	</class>
+</hibernate-mapping>

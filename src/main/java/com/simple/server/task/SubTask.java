@@ -40,9 +40,12 @@ public class SubTask extends ATask {
 
 	@Autowired
 	private AppConfig appConfig;
+	
+	@Autowired
+	private HttpImpl http;
+	
 	private List<IContract> list = new ArrayList<IContract>();
 	private ObjectMapper mapper = new ObjectMapper();
-	private IHttp http = new HttpImpl();
 
 	static {
 		orderMap.put("id", MiscType.desc);
@@ -213,6 +216,8 @@ public class SubTask extends ATask {
 				appConfig.getQueueLog().put(err);
 			} catch (Exception e) {
 				try {
+					
+					System.out.println(e.getMessage());
 					ErrSubMsg newErr = new ErrSubMsg();
 					newErr.setErrorId(ErrorType.SubTask.toValue());
 					newErr.setOperationType(OperationType.SUB);

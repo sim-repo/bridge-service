@@ -42,11 +42,13 @@ public class PubTask extends ATask {
 
 	@Autowired
 	private AppConfig appConfig;
+	
+	@Autowired
+	private HttpImpl http;
 
 	private final static Integer MAX_NUM_ELEMENTS = 100000;
 	private List<IContract> list = new ArrayList<IContract>();
 
-	private IHttp http = new HttpImpl();
 	
 	private static final Logger logger = LogManager.getLogger(PubTask.class);
 	

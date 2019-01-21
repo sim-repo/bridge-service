@@ -2,6 +2,7 @@
 package com.simple.server.http;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -10,6 +11,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Service;
+
 import com.simple.server.config.AppConfig;
 import com.simple.server.config.ContentType;
 import com.simple.server.util.HttpNotFoundException;
@@ -34,12 +37,16 @@ import org.apache.http.client.params.AuthPolicy;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.*;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-
+@Service("httpImpl")
+@Scope("singleton")
 public class HttpImpl implements IHttp {
 
 	@Autowired
@@ -112,10 +119,15 @@ public class HttpImpl implements IHttp {
 	}
 
 	
-	@SuppressWarnings("all")
+	@SuppressWarnings("deprecation")
 	public void postNTLM(String body, String url, String contentType, String msgId) throws Exception {
 
-		DefaultHttpClient httpclient = new DefaultHttpClient();
+		
+		HttpParams my_httpParams = new BasicHttpParams();
+		HttpConnectionParams.setConnectionTimeout(my_httpParams, appConfig.timeoutPolicies.getBackAsyncConnectionTimeout());
+		HttpConnectionParams.setSoTimeout(my_httpParams, appConfig.timeoutPolicies.getBackAsyncReadTimeout());
+	
+		DefaultHttpClient httpclient = new DefaultHttpClient(my_httpParams);
 		try {
 			httpclient.addRequestInterceptor(new HttpRequestInterceptor() {
 				public void process(final HttpRequest request, final HttpContext context)
@@ -131,16 +143,6 @@ public class HttpImpl implements IHttp {
 			HttpPost httpPost = new HttpPost(url);
 
 			httpPost.addHeader("Content-Type", contentType);
-
-			final RequestConfig params = RequestConfig.custom()
-					.setConnectTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionTimeout())
-					.setConnectionRequestTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout())
-					.build();
-			
-			
-			httpPost.setConfig(params);
-
-			//StringEntity entity = new StringEntity(body);
 			
 			
 			StringEntity entity = new StringEntity(body,  "utf-8");
@@ -155,13 +157,13 @@ public class HttpImpl implements IHttp {
 			httpclient.getParams().setParameter(AuthPNames.TARGET_AUTH_PREF, authtypes);
 
 			localContext.setAttribute(ClientContext.CREDS_PROVIDER, credsProvider);			
+
 			HttpResponse response = httpclient.execute(httpPost, localContext);
 			
 			checkHttpResonseStatusCode(url, response.getStatusLine().getStatusCode());
 						
 			if (response.getEntity() != null) {
 				response.getEntity().consumeContent();
-
 			}
 		} catch (HttpNotFoundException e) {
 			logger.debug(String.format("[HttpImpl] [ERR] NTLM %s %s %s, thread id: %s , thread name:  %s", url, msgId, e.getMessage(), Thread.currentThread().getId(), Thread.currentThread().getName()));

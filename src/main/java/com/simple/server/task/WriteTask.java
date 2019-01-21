@@ -38,7 +38,8 @@ public class WriteTask extends ATask {
 	
 	private final static Integer MAX_NUM_ELEMENTS = 100000;
 	private List<IContract> list = new ArrayList<IContract>();
-	private IHttp http = new HttpImpl();
+	@Autowired
+	private HttpImpl http;
 	
 	@Override
 	public void update(Observable o, Object arg) {
