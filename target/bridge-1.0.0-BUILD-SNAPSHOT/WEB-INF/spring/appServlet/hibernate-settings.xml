@@ -86,7 +86,7 @@
 				<value>hbm/UniPubErrLog.hbm.xml</value>
 				<value>hbm/UniSubErrLog.hbm.xml</value>
 				<value>hbm/UniPubSuccessLog.hbm.xml</value>
-				<value>hbm/UniPubConfirm.hbm.xml</value>
+				<value>hbm/UniPubConfirm.hbm.xml</value>				
 			</list>
 		</property>		
 	</bean>	
@@ -186,7 +186,8 @@
 								
 				<value>hbm/SessionFactories.hbm.xml</value>
 				<value>hbm/JDBCTemplates.hbm.xml</value>	
-				<value>hbm/TimeoutPolicies.hbm.xml</value>																			
+				<value>hbm/TimeoutPolicies.hbm.xml</value>		
+				 <value>hbm/DbUniGet.hbm.xml</value>  																
 			</list>
 		</property>		
 	</bean>	

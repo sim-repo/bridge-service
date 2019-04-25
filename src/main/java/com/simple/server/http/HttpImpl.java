@@ -70,6 +70,7 @@ public class HttpImpl implements IHttp {
 		}
 	}
 
+	
 	public void prepareAndSend(Object msg, String url, ContentType contentType, Boolean useAuth, String msgId) throws Exception {
 		String converted = null;
 		String sContentType = null;
@@ -90,6 +91,7 @@ public class HttpImpl implements IHttp {
 	}
 	
 
+	
 	public void post(String body, String url, String sContentType, ContentType contentType, Boolean useAuth, String msgId) throws Exception {
 		
 		logger.debug(String.format("[HttpImpl] [PRE] %s %s , thread id: %s , thread name:  %s", url, msgId, Thread.currentThread().getId(), Thread.currentThread().getName()));
@@ -97,12 +99,12 @@ public class HttpImpl implements IHttp {
 			postNTLM(body, url, sContentType, msgId);
 		} else {
 			ResponseEntity<String> response = null;
-			URI uri = new URI(url);			
+			URI uri = new URI(url);
 												
 			HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
-		     httpRequestFactory.setConnectionRequestTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout());
-			 httpRequestFactory.setConnectTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionTimeout());
-			 httpRequestFactory.setReadTimeout(appConfig.timeoutPolicies.getBackAsyncReadTimeout());
+		    httpRequestFactory.setConnectionRequestTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout());
+			httpRequestFactory.setConnectTimeout(appConfig.timeoutPolicies.getBackAsyncConnectionTimeout());
+			httpRequestFactory.setReadTimeout(appConfig.timeoutPolicies.getBackAsyncReadTimeout());
 			
 		    RestTemplate restTemplate = new RestTemplate(httpRequestFactory);		        
 			HttpEntity<String> entity = null;
