@@ -88,10 +88,8 @@ public abstract class ADao implements IDao{
 	}
 	
 	@Override
-	public String readFlatJsonArray(JdbcTemplate currentJDBCTemplate, String sql) throws  Exception {		
-		System.out.println( System.currentTimeMillis());
-		List<Map<String,Object>> list =  currentJDBCTemplate.queryForList(sql);		
-		System.out.println( System.currentTimeMillis());
+	public String readFlatJsonArray(JdbcTemplate currentJDBCTemplate, String sql) throws  Exception {				
+		List<Map<String,Object>> list =  currentJDBCTemplate.queryForList(sql);				
 		return ObjectConverter.listMapToJson(list);
 	}
 	
@@ -134,7 +132,6 @@ public abstract class ADao implements IDao{
 				result.append(pair.getValue());
 			}		
 		}	
-		System.out.println(result.toString());
 		JSONObject jObject = XML.toJSONObject(result.toString());
 	    ObjectMapper mapper = new ObjectMapper();	   
 	    Object json = mapper.readValue(jObject.toString(), Object.class);
