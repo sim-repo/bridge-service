@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import com.simple.server.lifecycle.HqlStepsType;
 import com.simple.server.mediators.CommandType;
 import com.simple.server.service.IService;
 import com.simple.server.statistics.time.Timing;
+import com.simple.server.util.MyLogger;
 
 @Service("ReadTask")
 @Scope("prototype")
@@ -22,7 +25,7 @@ public class ReadTask extends ATask {
 	
 	private final static Integer MAX_NUM_ELEMENTS = 100000;
 	private List<IContract> list = new ArrayList<IContract>();
-		
+	
 	@Override
 	public void update(Observable o, Object arg) {
 	    if(arg != null && arg.getClass() == CommandType.class) {
@@ -68,7 +71,8 @@ public class ReadTask extends ATask {
         						  r.getJuuid()
         						  );
         			http = null;        		
-        		}catch(Exception e){        			
+        		}catch(Exception e){   
+        			MyLogger.error(getClass(), e);        			
         		}
         	}
         }

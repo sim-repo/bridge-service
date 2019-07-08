@@ -20,10 +20,8 @@ public class HotPubMsg extends AContract{
 	@Override
 	public void copyFrom(IContract _msg) throws Exception {				
 		super.copyFrom(_msg);
+		setMessageBodyValue("");
 		
-		if (_msg.getSaveBodyToHots() != null && _msg.getSaveBodyToHots() == false) {
-			setMessageBodyValue("");
-		}
 	}
 
 }

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import com.simple.server.mediators.CommandType;
 import com.simple.server.service.IService;
 import com.simple.server.statistics.time.Timing;
 import com.simple.server.util.DateConvertHelper;
+import com.simple.server.util.MyLogger;
 
 @Service("WriteTask")
 @Scope("prototype")
@@ -40,6 +43,7 @@ public class WriteTask extends ATask {
 	private List<IContract> list = new ArrayList<IContract>();
 	@Autowired
 	private HttpImpl http;
+	
 	
 	@Override
 	public void update(Observable o, Object arg) {
@@ -110,7 +114,7 @@ public class WriteTask extends ATask {
         	try{        					
 				if(msg.getEndPointId() == null){
 					throw new Exception(
-							String.format("msg.[juuid]: < %s > - endpoint id is null  < %s > ", msg.getJuuid()));
+							String.format("msg.[juuid]: < %s > - endpoint id is null ", msg.getJuuid()));
 				}
 				
 				IService service = getAppConfig().getServiceFactory().getService(msg.getEndPointId());
@@ -223,12 +227,12 @@ public class WriteTask extends ATask {
 					err.setResponseURI(route.getPublisherHandler());
 					err.setResponseContractClass(route.getPublisherStoreClass());
 					err.setSubscriberId(msg.getSubscriberId());
-					errors.add(err);		
+					errors.add(err);	
 				}				
 			}
 									
 		}catch(Exception ex){
-			ex.printStackTrace();
+			MyLogger.error(getClass(), ex); 
 		}
 	}
 	
@@ -285,7 +289,7 @@ public class WriteTask extends ATask {
 					appConfig.getQueueLog().put(err);
 					appConfig.getQueueLog().put(newErr);
 				} catch (Exception e1) {
-					e1.printStackTrace();
+					MyLogger.error(getClass(), e1); 			
 				}
 			}
 		}

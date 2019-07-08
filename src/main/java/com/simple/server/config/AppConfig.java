@@ -1,7 +1,10 @@
 package com.simple.server.config;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,7 +24,12 @@ import org.springframework.stereotype.Service;
 import com.simple.server.dao.endpoint.IEndpointDao;
 import com.simple.server.dao.endpoint.EndpointDaoImpl;
 import com.simple.server.dao.log.ILogDao;
+
 import com.simple.server.domain.contract.IContract;
+
+import com.simple.server.domain.contract.PubErrRouting;
+import com.simple.server.domain.contract.PubSuccessRouting;
+import com.simple.server.domain.contract.SubRouting;
 import com.simple.server.domain.log.LogTimeoutPolicies;
 import com.simple.server.factory.ContractRecFactory;
 import com.simple.server.factory.PhaserRunner;
@@ -30,6 +38,7 @@ import com.simple.server.factory.ServiceFactory;
 import com.simple.server.mediators.Mediator;
 import com.simple.server.service.IService;
 import com.simple.server.service.sender.Sender;
+import com.simple.server.util.MyLogger;
 
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jms.connection.CachingConnectionFactory;
@@ -58,6 +67,15 @@ public class AppConfig {
 	private static Map<String, JdbcTemplate> jdbcTemplates = new HashMap();
 	ConcurrentHashMap<String, String> sessionFactoriesString= new ConcurrentHashMap<String, String>();
 	
+	ConcurrentHashMap<String, List<SubRouting>> routes = new ConcurrentHashMap<String, List<SubRouting>>();
+	ConcurrentHashMap<String, List<PubErrRouting>> errRoutes = new ConcurrentHashMap<String, List<PubErrRouting>>();
+	ConcurrentHashMap<String, List<PubSuccessRouting>> successRoutes = new ConcurrentHashMap<String, List<PubSuccessRouting>>();
+	
+	ConcurrentHashMap<String, List<SubRouting>> tmpRoutes = new ConcurrentHashMap<String, List<SubRouting>>();
+	ConcurrentHashMap<String, List<PubErrRouting>> tmpErrRoutes = new ConcurrentHashMap<String, List<PubErrRouting>>();
+	ConcurrentHashMap<String, List<PubSuccessRouting>> tmpSuccessRoutes = new ConcurrentHashMap<String, List<PubSuccessRouting>>();
+	
+	
 	public LogTimeoutPolicies timeoutPolicies = new LogTimeoutPolicies();
 	
 	private String serviceId;
@@ -78,7 +96,6 @@ public class AppConfig {
 	private LinkedBlockingQueue<IContract> queueLog;
 	private LinkedBlockingQueue<IContract> queueMon;
 	
-	private static final Logger logger = LogManager.getLogger(AppConfig.class);
 	
 	private Mediator mediator = new Mediator();   
 	
@@ -125,6 +142,236 @@ public class AppConfig {
 		
 	
 
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	
+	// @@@@@@@@@@@@@@@ Routes		 @@@@@@@@@@@@@@@
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	public void clearTmpRoutes() {
+		tmpRoutes = new ConcurrentHashMap<String, List<SubRouting>>();
+		tmpErrRoutes = new ConcurrentHashMap<String, List<PubErrRouting>>();
+		tmpSuccessRoutes = new ConcurrentHashMap<String, List<PubSuccessRouting>>();
+	}
+	
+	public void setAllRoutesWhenStarting() {
+		if (this.tmpRoutes != null && this.tmpRoutes.isEmpty() == false && 
+				this.tmpSuccessRoutes != null && this.tmpSuccessRoutes.isEmpty() == false && 
+				this.tmpErrRoutes != null && this.tmpErrRoutes.isEmpty() == false)  {
+				
+				this.routes = this.tmpRoutes;
+				this.successRoutes = this.tmpSuccessRoutes;
+				this.errRoutes = this.tmpErrRoutes;				
+			} else {
+				MyLogger.error(getClass(), "Trying config routes: can't loading config information from database!");
+				throw new java.lang.Error("Trying config routes: can't configure routes. Check database connections!!!");				
+			}		
+	}
+	
+	public boolean refreshAllRoutes() {
+		if (this.tmpRoutes != null && this.tmpRoutes.isEmpty() == false && 
+			this.tmpSuccessRoutes != null && this.tmpSuccessRoutes.isEmpty() == false && 
+			this.tmpErrRoutes != null && this.tmpErrRoutes.isEmpty() == false)  {
+			
+			this.routes = this.tmpRoutes;
+			this.successRoutes = this.tmpSuccessRoutes;
+			this.errRoutes = this.tmpErrRoutes;
+			MyLogger.warn(getClass(), "Routes refreshing complete.");
+			return true;
+		} else {
+			MyLogger.error(getClass(), "Trying refresh routes: can't configure routes. Check database connections!!!");
+			return false;
+		}
+	}
+	
+	public void setRoutes(String senderId_eventId_key, SubRouting route){
+		List<SubRouting> tmp = this.tmpRoutes.get(senderId_eventId_key);
+		if (tmp == null) {
+			tmp = new ArrayList<SubRouting>();
+		}		
+		tmp.add(route);
+		this.tmpRoutes.put(senderId_eventId_key, tmp);		
+	}
+	
+	public  List<SubRouting> getRoutes(String senderId_eventId_key){
+		return this.routes.get(senderId_eventId_key);
+	}
+	
+	
+	
+	public  void logSizeRoutes(){
+		MyLogger.warnSingleHeader(getClass(), "Sub Routes");
+		MyLogger.warn(getClass(),"PROPERTY:;SIZE:;");				
+		for (Map.Entry<String, List<SubRouting>> entry : this.routes.entrySet()) {		    
+			MyLogger.warn(getClass(), entry.getKey() + ";" +entry.getValue().size());
+		}
+	}
+	
+	public  String getSizeRoutes(){	
+		if (this.routes != null) {
+			return ""+this.routes.size();
+		}
+		return ""+0;
+	}
+	
+	public  String logRoutes(){		
+		StringBuilder ret = new StringBuilder();		
+		MyLogger.warnSingleHeader(getClass(), "Details: Sub Routes");
+		MyLogger.warn(getClass(), "ID;:EVENT_ID:;PUB_ID:;SUB_ID:;URL:;AUTH:;");
+		for (Map.Entry<String, List<SubRouting>> entry : this.routes.entrySet()) {
+			for (SubRouting route : entry.getValue()) {
+				
+				String url = route.getSubscriberHandler() == null || route.getSubscriberHandler().isEmpty() ? route.getSubscriberStoreClass() : route.getSubscriberHandler();
+				String t = String.format("[id]: [%s]; [event_id]: [%s]; [publisher_id]: [%s]; [subscriber_id]: [%s]; [url]: [%s]; [auth]: [%s]",
+						route.getId(),
+						route.getEventId(),
+						route.getSenderId(),
+						route.getSubscriberId(),						
+						url,
+						route.getUseAuth()
+						);
+								
+				ret.append(t);
+				ret.append("\n");
+				ret.append("\n");
+				
+				MyLogger.warn(getClass(),String.format("%s;%s;%s;%s;%s;%s;", 
+						route.getId(),
+						route.getEventId(),
+						route.getSenderId(),
+						route.getSubscriberId(),
+						url,
+						route.getUseAuth()
+						));				
+			}										
+		}
+		return ret.toString();
+	}
+	
+	
+	
+	
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	
+	// @@@@@@@@@@@@@@@ Success Routes		 @@@@@@@
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	
+	public void setSuccessRoutes(String senderId_eventId_key, PubSuccessRouting route){
+		List<PubSuccessRouting> tmp = this.tmpSuccessRoutes.get(senderId_eventId_key);
+		if (tmp == null) {
+			tmp = new ArrayList<PubSuccessRouting>();
+		} 		
+		tmp.add(route);
+		this.tmpSuccessRoutes.put(senderId_eventId_key, tmp);		
+	}
+	
+	public  List<PubSuccessRouting> getSuccessRoutes(String senderId_eventId_key){
+		return this.successRoutes.get(senderId_eventId_key);
+	}
+	
+	public  void logSizeSuccessRoutes(){		
+		MyLogger.warnSingleHeader(getClass(), "Success Routes");
+		MyLogger.warn(getClass(),"PROPERTY:;SIZE:;");
+		for (Map.Entry<String, List<PubSuccessRouting>> entry : this.successRoutes.entrySet()) {		    
+			MyLogger.warn(getClass(), entry.getKey() + ";" +entry.getValue().size());
+		}		
+	}
+	
+	public  String getSizeSuccessRoutes(){	
+		if (this.successRoutes != null) {
+			return ""+this.successRoutes.size();
+		}
+		return ""+0;
+	}
+	
+	public  String logSuccessRoutes(){
+		StringBuilder ret = new StringBuilder();		
+		MyLogger.warnSingleHeader(getClass(), "Details: Success Routes");		
+		MyLogger.warn(getClass(), "ID:;EVENT_ID:;PUB_ID:;URL:;AUTH:;");
+		for (Map.Entry<String, List<PubSuccessRouting>> entry : this.successRoutes.entrySet()) {
+			for (PubSuccessRouting route : entry.getValue()) {
+				String url = route.getPublisherHandler() == null || route.getPublisherHandler().isEmpty() ? route.getPublisherStoreClass() : route.getPublisherHandler();
+				String t = String.format("[sender_id]: [%s]; [event_id]: [%s]; [url]: [%s]; [auth]: [%s]", 
+						route.getPublisherId(),
+						route.getEventId(),
+						url,
+						route.getUseAuth()
+						);
+				ret.append(t);
+				ret.append("\n");
+				ret.append("\n");
+				MyLogger.warn(getClass(),String.format("%s;%s;%s;%s;%s;",
+						route.getId(),
+						route.getEventId(),
+						route.getPublisherId(),
+						url,									
+						route.getUseAuth()
+						));					
+			}										
+		}
+		return ret.toString();
+	}
+	
+	
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@	
+	// @@@@@@@@@@@@@@@ err Routes		 @@@@@@@@@@@
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	
+	public void setErrRoutes(String senderId_eventId_key, PubErrRouting route){
+		List<PubErrRouting> tmp = this.tmpErrRoutes.get(senderId_eventId_key);
+		if (tmp == null) {
+			tmp = new ArrayList<PubErrRouting>();
+		} 		
+		tmp.add(route);
+		this.tmpErrRoutes.put(senderId_eventId_key, tmp);		
+	}
+	
+	public  List<PubErrRouting> getErrRoutes(String senderId_eventId_key){
+		return this.errRoutes.get(senderId_eventId_key);
+	}
+	
+	public  void logSizeErrRoutes(){		
+		MyLogger.warnSingleHeader(getClass(), "Error Routes");
+		MyLogger.warn(getClass(),"PROPERTY:;SIZE:;");
+		for (Map.Entry<String, List<PubErrRouting>> entry : this.errRoutes.entrySet()) {		    
+			MyLogger.warn(getClass(), entry.getKey() + ";" +entry.getValue().size());
+		}		
+	}
+	
+	
+	public  String getSizeErrRoutes(){	
+		if (this.errRoutes != null) {
+			return ""+this.errRoutes.size();
+		}
+		return ""+0;
+	}
+	
+	
+	public String logErrRoutes(){
+		
+		MyLogger.warnSingleHeader(getClass(), "Details: Error Routes");		
+		MyLogger.warn(getClass(), "ID:;EVENT_ID:;PUB_ID:;URL:;AUTH:;");
+		StringBuilder ret = new StringBuilder();
+		for (Map.Entry<String, List<PubErrRouting>> entry : this.errRoutes.entrySet()) {
+			for (PubErrRouting route : entry.getValue()) {
+				String url = route.getPublisherHandler() == null || route.getPublisherHandler().isEmpty() ? route.getPublisherStoreClass() : route.getPublisherHandler();
+				String t = String.format("[sender_id]: [%s]; [event_id]: [%s]; [url]: [%s]; [auth]: [%s]", 
+						route.getPublisherId(),
+						route.getEventId(),
+						url,
+						route.getUseAuth()
+						);
+				ret.append(t);
+				ret.append("\n");		
+				ret.append("\n");
+				MyLogger.warn(getClass(),String.format("%s;%s;%s;%s;%s",
+						route.getId(),
+						route.getEventId(),
+						route.getPublisherId(),
+						url,									
+						route.getUseAuth()
+						));								
+			}										
+		}
+		return ret.toString();
+	}
+	
 	
 	
 	public Sender getSender() {
@@ -282,11 +529,7 @@ public class AppConfig {
 
 	public PhaserRunner getPhaserRunner() {
 		return phaserRunner;
-	}
-
-	public static Logger getLogger() {
-		return logger;
-	}		
+	}	
 
 	public void initQueueDirty(int size){
 		this.queueDirty = new LinkedBlockingQueue<>(size);

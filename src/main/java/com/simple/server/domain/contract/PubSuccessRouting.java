@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonAutoDetect
 @JsonDeserialize(as = PubSuccessRouting.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PubSuccessRouting extends AContract{
+public class PubSuccessRouting extends ALogContract{
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -16,6 +16,7 @@ public class PubSuccessRouting extends AContract{
 	protected int id;
 
 	protected String bodyContentType;
+	private Boolean useAuth = false;
 	
 	@Override
 	public String getClazz() {
@@ -37,5 +38,14 @@ public class PubSuccessRouting extends AContract{
 	public void setBodyContentType(String contentType) {
 		this.bodyContentType = contentType;
 	}
+
+	public Boolean getUseAuth() {
+		return useAuth;
+	}
+
+	public void setUseAuth(Boolean useAuth) {
+		this.useAuth = useAuth;
+	}
+	
 		
 }

@@ -182,7 +182,6 @@ public abstract class ATask extends Observable implements ITask, Callable, Obser
 
     @Override
     public Object call() throws Exception {
-        System.out.println(this);
         
         while(!executor.isShutdown()){
             try {            	

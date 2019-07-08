@@ -22,7 +22,7 @@
 	<bean id="inboundConnectionFactory"  class="org.springframework.jms.connection.CachingConnectionFactory">
 		<property name="targetConnectionFactory">
 			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
-				<property name="brokerURL" value="tcp://localhost:61616"/>	
+				<property name="brokerURL" value="${amq.connectionFactory}"/>	
 				<!-- <property name="trustAllPackages" value="true"/> -->	
 			</bean>
 		</property>

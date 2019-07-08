@@ -14,7 +14,8 @@
 		<property name="eventId" column="[event_id]"/>
 		<property name="publisherHandler" column="[publisher_handler]" />
 		<property name="publisherStoreClass" column="[publisher_store_class]" />
-			
+		<property name="useAuth" column="[use_auth]" />
+		
 		<property name="responseContentType" column="[content_type]" >
 		  <type name="org.hibernate.type.EnumType">
 		        <param name="enumClass">com.simple.server.config.ContentType</param>

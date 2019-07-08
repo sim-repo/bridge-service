@@ -5,8 +5,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,26 +15,22 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.simple.server.config.AppConfig;
 import com.simple.server.domain.IRec;
 import com.simple.server.domain.contract.IContract;
+import com.simple.server.domain.contract.PubErrRouting;
+import com.simple.server.domain.contract.PubSuccessRouting;
+import com.simple.server.domain.contract.SubRouting;
 import com.simple.server.domain.log.LogTimeoutPolicies;
+import com.simple.server.service.IService;
+import com.simple.server.util.MyLogger;
 
-/**
- * Handles requests for the application home page.
- */
+
 @Controller
 public class HomeController {
 	
 	@Autowired
 	private AppConfig appConfig;
-	
-	private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
-	
-	/**
-	 * Simply selects the home view to render by returning its name.
-	 */
+
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String home(Locale locale, Model model) {
-		logger.info("Welcome home! The client locale is {}.", locale);
-		
 		Date date = new Date();
 		DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, locale);
 		
@@ -100,6 +94,74 @@ public class HomeController {
 		ret.append("back_async_connection_request_timeout:"+appConfig.timeoutPolicies.getBackAsyncConnectionRequestTimeout()+"\n\n\n");
 		ret.append("back_async_connection_timeout:"+appConfig.timeoutPolicies.getBackAsyncConnectionTimeout()+"\n\n\n");
 		
+		return ret.toString();		
+	}
+	
+	/**
+	 * <p> Утилита: рефрешинг кэша из [routing sub]</p>
+	 * @author Иванов И.
+	 * @version 1.0	 	 
+	 */
+	@RequestMapping(value = "/util/cache/routes/refresh", method = RequestMethod.GET, produces = "text/plain;charset=UTF-8")
+	public @ResponseBody String jsonRefresRoutingGet() {		
+		StringBuilder ret = new StringBuilder();
+		MyLogger.warnStartBlock(getClass(), "MANUAL REFRESH ROUTES: starting...");
+		
+		List<IContract> res3 = null;
+		try {
+			appConfig.clearTmpRoutes();
+			
+			IService service = appConfig.getServiceFactory().getService(appConfig.LOG_ENDPOINT_NAME);
+			
+			List<SubRouting> routes = service.<SubRouting>readbyCriteria(appConfig.LOG_ENDPOINT_NAME, SubRouting.class, null, 0, null);			 			
+			List<PubSuccessRouting> successRoutes = service.<PubSuccessRouting>readbyCriteria(appConfig.LOG_ENDPOINT_NAME, PubSuccessRouting.class, null, 0, null);	
+			List<PubErrRouting> errRoutes = service.<PubErrRouting>readbyCriteria(appConfig.LOG_ENDPOINT_NAME, PubErrRouting.class, null, 0, null);	
+					
+			
+			if(routes != null) {
+				MyLogger.warnSingleHeader(getClass(), "Sub Routes;"+routes.size());						
+				for(IContract rec: routes) {
+					SubRouting r = (SubRouting)rec;					
+					appConfig.setRoutes(r.getSenderId()+r.getEventId(), r);
+					MyLogger.warn(getClass(),r.getPublisherId()+";"+r.getEventId());	
+				}
+				
+			}
+			
+			if(successRoutes != null) {				
+				MyLogger.warnSingleHeader(getClass(), "Success Routes;"+successRoutes.size());
+				for(IContract rec: successRoutes) {
+					PubSuccessRouting r = (PubSuccessRouting)rec;
+					MyLogger.warn(getClass(),r.getPublisherId()+";"+r.getEventId());	
+					appConfig.setSuccessRoutes(r.getPublisherId()+r.getEventId(), r);					
+				}					
+			}
+			
+			if(errRoutes != null) {
+				MyLogger.warnSingleHeader(getClass(), "Err Routes;"+errRoutes.size());							
+				for(IContract rec: errRoutes) {
+					PubErrRouting r = (PubErrRouting)rec;
+					MyLogger.warn(getClass(),r.getPublisherId()+";"+r.getEventId());	
+					appConfig.setErrRoutes(r.getPublisherId()+r.getEventId(), r);					
+				}
+			}
+			
+			if (appConfig.refreshAllRoutes() == false) {
+				String s = "MANUAL REFRESH ROUTES: check database connections!!!";
+				ret.append(s);
+				MyLogger.error(getClass(), s);
+				MyLogger.warnEndBlock(getClass(), "MANUAL REFRESH ROUTES: failed.");
+			} else {
+				ret.append("Routes: " + appConfig.getSizeRoutes() +"\n" + appConfig.logRoutes()+"\n\n\n");
+				ret.append("Success Routes: " + appConfig.getSizeSuccessRoutes() +"\n" + appConfig.logSuccessRoutes()+"\n\n\n");
+				ret.append("Error Routes: " + appConfig.getSizeErrRoutes() +"\n" + appConfig.logErrRoutes()+"\n\n\n");
+				MyLogger.warnEndBlock(getClass(), "MANUAL REFRESH ROUTES: successful.");
+			}
+			
+		} catch (Exception e) {
+			MyLogger.error(getClass(), e);
+			ret.append(e.getMessage());
+		}									
 		return ret.toString();		
 	}
 	

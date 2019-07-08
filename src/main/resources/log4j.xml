@@ -2,48 +2,66 @@
 <!DOCTYPE log4j:configuration PUBLIC "-//APACHE//DTD LOG4J 1.2//EN" "log4j.dtd">
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
-	<!-- Appenders -->
-
 	
-	<appender name="file" class="org.apache.log4j.RollingFileAppender">
-	   <param name="append" value="true" />
+	
+	<appender name="warn-log" class="org.apache.log4j.RollingFileAppender">
+	   <param name="append" value="false" />  
 	   <param name="encoding" value="UTF-8" />	 
 	   <param name="MaxFileSize" value="10MB"/> 
-	   <param name="MaxBackupIndex" value="10"/>
-	   <param name="file" value="${catalina.home}/logs/bridge-log4.log" />	   
+	   <param name="MaxBackupIndex" value="5"/>	
+	   <param name="file" value="${catalina.home}/logs/bridge-warn.log" />	   
 	  
 	   <layout class="org.apache.log4j.PatternLayout">
 		<param name="ConversionPattern"
-			value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
+			value="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
 	   </layout>
+	   <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="warn" />
+            <param name="LevelMax" value="warn" />
+            <param name="AcceptOnMatch" value="true" />
+        </filter>
 	</appender>
 	
+	<appender name="error-log" class="org.apache.log4j.RollingFileAppender">
+	   		
+	   <param name="file" value="${catalina.home}/logs/bridge-error.log" />
+	   <param name="MaxFileSize" value="10MB"/> 
+	   <param name="MaxBackupIndex" value="5"/>		
+	     	   	  
+	   <layout class="org.apache.log4j.PatternLayout">
+		<param name="ConversionPattern"
+			value="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
+	   </layout>
+	   <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="error" />
+            <param name="LevelMax" value="fatal" />
+            <param name="AcceptOnMatch" value="true" />
+        </filter>
+	</appender>
+	 
+	<appender name="info-log" class="org.apache.log4j.RollingFileAppender">
+	   <param name="append" value="false" />  
+	   <param name="encoding" value="UTF-8" />	 
+	   <param name="MaxFileSize" value="10MB"/> 
+	   <param name="MaxBackupIndex" value="5"/>	
+	   <param name="file" value="${catalina.home}/logs/bridge-info.log" />	   
+	  
+	   <layout class="org.apache.log4j.PatternLayout">
+		<param name="ConversionPattern"
+			value="%d{yyyy-MM-dd HH:mm:ss};%m%n" />
+	   </layout>
+	   <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="LevelMin" value="info" />
+            <param name="LevelMax" value="info" />
+            <param name="AcceptOnMatch" value="true" />
+        </filter>
+	</appender>
 	
-	<!-- Application Loggers -->
+
 	<logger name="com.simple.server">
-		<level value="debug" />
-	</logger>
-	
-	<!-- 3rdparty Loggers -->
-	<logger name="org.springframework.core">
-		<level value="info" />
-	</logger>
-	
-	<logger name="org.springframework.beans">
-		<level value="info" />
-	</logger>
-	
-	<logger name="org.springframework.context">
-		<level value="info" />
+		<appender-ref ref="info-log" />
+		<appender-ref ref="warn-log" />
+		<appender-ref ref="error-log" />		
 	</logger>
 
-	<logger name="org.springframework.web">
-		<level value="info" />
-	</logger>
-	
-	<root>
-		<level value="ERROR" />
-		<appender-ref ref="file" />
-	</root>
-	
 </log4j:configuration>

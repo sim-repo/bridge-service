@@ -15,13 +15,13 @@ public class SubRouting extends AContract{
 	
 	@JsonProperty("id")
 	protected int id;
-	protected String bodyContentType;
-	protected Boolean useAuth;
-	protected String bodyFldSeparator;	
-	protected Boolean removeXmlAttributes;	
-	protected Boolean useCharsetBase64;
-	protected Boolean useXmlDeclaration;
-	protected Boolean disableRoutingPubErrSuccess;
+	protected String bodyContentType = "";
+	protected Boolean useAuth = false;
+	protected String bodyFldSeparator = "";	
+	protected Boolean removeXmlAttributes = false;	
+	protected Boolean useCharsetBase64 = false;
+	protected Boolean useXmlDeclaration = false;
+	protected Boolean disableRoutingPubErrSuccess = false;
 	
 	@Override
 	public String getClazz() {
@@ -39,44 +39,58 @@ public class SubRouting extends AContract{
 	public void setBodyContentType(ContentType bodyContentType) {				
 		this.bodyContentType = bodyContentType.toValue();
 	}		
-	public Boolean getUseAuth() {
-		return useAuth;
+	public Boolean getUseAuth() {		
+		return useAuth == null ? false : useAuth ;
 	}
 	public void setUseAuth(Boolean useAuth) {
-		this.useAuth = useAuth;
+		if (useAuth != null) {
+			this.useAuth = useAuth;
+		}
 	}		
 	public String getBodyFldSeparator() {
 		return bodyFldSeparator;
 	}
 	public void setBodyFldSeparator(String bodyFldSeparator) {
-		this.bodyFldSeparator = bodyFldSeparator;
+		if (bodyFldSeparator != null) {
+			this.bodyFldSeparator = bodyFldSeparator;
+		}
 	}			
 	public Boolean getRemoveXmlAttributes() {
-		return removeXmlAttributes;
+		return removeXmlAttributes == null ? false : removeXmlAttributes;
 	}
 	public void setRemoveXmlAttributes(Boolean removeXmlAttributes) {
-		this.removeXmlAttributes = removeXmlAttributes;
+		if (removeXmlAttributes != null) {
+			this.removeXmlAttributes = removeXmlAttributes;
+		}
 	}
 	public Boolean getUseCharsetBase64() {
-		return useCharsetBase64;
+		return useCharsetBase64 == null ? false : useCharsetBase64;
 	}
 	public void setUseCharsetBase64(Boolean useCharsetBase64) {
-		this.useCharsetBase64 = useCharsetBase64;
+		if (useCharsetBase64 != null) {
+			this.useCharsetBase64 = useCharsetBase64;
+		}
 	}
 	public void setBodyContentType(String bodyContentType) {
-		this.bodyContentType = bodyContentType;
+		if (bodyContentType != null) {
+			this.bodyContentType = bodyContentType;
+		}
 	}	
 	public Boolean getUseXmlDeclaration() {
-		return useXmlDeclaration;
+		return useXmlDeclaration == null ? false : useXmlDeclaration;
 	}
 	public void setUseXmlDeclaration(Boolean useXmlDeclaration) {
-		this.useXmlDeclaration = useXmlDeclaration;
+		if (useXmlDeclaration != null) {
+			this.useXmlDeclaration = useXmlDeclaration;
+		}
 	}
 	public Boolean getDisableRoutingPubErrSuccess() {
-		return disableRoutingPubErrSuccess;
+		return disableRoutingPubErrSuccess == null ? false : disableRoutingPubErrSuccess;
 	}
 	public void setDisableRoutingPubErrSuccess(Boolean disableRoutingPubErrSuccess) {
-		this.disableRoutingPubErrSuccess = disableRoutingPubErrSuccess;
+		if (disableRoutingPubErrSuccess != null) {
+			this.disableRoutingPubErrSuccess = disableRoutingPubErrSuccess;
+		}
 	}
 	@Override
 	public void copyFrom(IRec rec) throws Exception{

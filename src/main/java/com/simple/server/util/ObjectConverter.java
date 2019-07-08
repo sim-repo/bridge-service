@@ -204,7 +204,7 @@ public class ObjectConverter {
 		 	case XmlPlainText:
 		 	case ApplicationXml: 
 		 				 		
-		 		if(fldSeparator != null)
+		 		if(fldSeparator != null && fldSeparator.isEmpty()  == false)
 		 			original = prepareJSON(original, fldSeparator);
 		 		isJson = ObjectConverter.isValidJSON(original);
 		 		if(isJson){
@@ -214,7 +214,7 @@ public class ObjectConverter {
 		 	case JsonPlainText:
 		 	case ApplicationJson:
 		 				 			
-		 		if(fldSeparator != null)
+		 		if(fldSeparator != null && fldSeparator.isEmpty() == false)
 		 			original = prepareJSON(original, fldSeparator);
 		 		
 		 		isJson = ObjectConverter.isValidJSON(original);

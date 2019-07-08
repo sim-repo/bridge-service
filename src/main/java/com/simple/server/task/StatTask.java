@@ -60,7 +60,6 @@ public class StatTask extends ATask {
 		if (getAppConfig().getQueueMon().drainTo(list, MAX_NUM_ELEMENTS) == 0) {
 			list.add(getAppConfig().getQueueMon().take());
 		}
-		System.out.println("bridge-service has just caught mon-msg....");
 		
 		for (IContract msg : list) {
 			if (msg instanceof MonMsg) {

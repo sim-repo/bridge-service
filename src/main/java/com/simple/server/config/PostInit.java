@@ -22,28 +22,28 @@ public class PostInit implements ApplicationListener<ContextRefreshedEvent> {
 	@Autowired
 	AppConfig appConfig;	  
 	  
-	@Value("${queueSizeDirty.int.property :100}")
+	@Value("${queueSizeDirty.int.property:10000}")
 	private int queueSizeDirty;
 	
-	@Value("${queueSizeRead.int.property :100}")
+	@Value("${queueSizeRead.int.property:10000}")
 	private int queueSizeRead;
 	  
-	@Value("${queueSizeWrite.int.property :100}")
+	@Value("${queueSizeWrite.int.property:10000}")
 	private int queueSizeWrite;
 	  
-	@Value("${queueSizePub.int.property :100}")
+	@Value("${queueSizePub.int.property:10000}")
 	private int queueSizePub;
   
-	@Value("${queueSizeSub.int.property :100}")
+	@Value("${queueSizeSub.int.property:10000}")
 	private int queueSizeSub;  
 	
-	@Value("${queueSizeLog.int.property :100}")
+	@Value("${queueSizeLog.int.property:10000}")
 	private int queueSizeLog;
 	
-	@Value("${queueSizeMon.int.property :1}")
+	@Value("${queueSizeMon.int.property:1}")
 	private int queueSizeMon;
 	
-	@Value("${service.String.property}")
+	@Value("${service.bridge.name:bridge}")
 	private String serviceId;
 	
 	

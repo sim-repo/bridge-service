@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ import com.simple.server.mediators.CommandType;
 import com.simple.server.service.IService;
 import com.simple.server.statistics.time.Timing;
 import com.simple.server.util.DateConvertHelper;
+import com.simple.server.util.MyLogger;
 
 @Service("SubTask")
 @Scope("prototype")
@@ -45,8 +48,8 @@ public class SubTask extends ATask {
 	private HttpImpl http;
 	
 	private List<IContract> list = new ArrayList<IContract>();
-	private ObjectMapper mapper = new ObjectMapper();
-
+	private ObjectMapper mapper = new ObjectMapper();	
+	
 	static {
 		orderMap.put("id", MiscType.desc);
 	}
@@ -234,7 +237,7 @@ public class SubTask extends ATask {
 					appConfig.getQueueLog().put(err);
 					appConfig.getQueueLog().put(newErr);
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					MyLogger.error(getClass(), e); 
 				}
 			}
 		}
@@ -262,8 +265,9 @@ public class SubTask extends ATask {
 					newErr.setPublisherId(success.getPublisherId());
 					appConfig.getQueueLog().put(success);
 					appConfig.getQueueLog().put(newErr);
+					MyLogger.error(getClass(), e); 
 				} catch (InterruptedException e1) {
-					e1.printStackTrace();
+					MyLogger.error(getClass(), e1); 
 				}
 			}
 		}

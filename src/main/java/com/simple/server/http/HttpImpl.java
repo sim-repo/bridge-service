@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.simple.server.config.AppConfig;
 import com.simple.server.config.ContentType;
 import com.simple.server.util.HttpNotFoundException;
+import com.simple.server.util.MyLogger;
 import com.simple.server.util.ObjectConverter;
 
 import java.io.IOException;
@@ -52,8 +53,6 @@ public class HttpImpl implements IHttp {
 	@Autowired
 	private AppConfig appConfig;
 	
-	
-	private static final Logger logger = LogManager.getLogger(HttpImpl.class);
 	
 	@Override
 	public void sendHttp(Object msg, String url, ContentType contentType, Boolean useAuth, String msgId) throws Exception {
@@ -93,8 +92,7 @@ public class HttpImpl implements IHttp {
 
 	
 	public void post(String body, String url, String sContentType, ContentType contentType, Boolean useAuth, String msgId) throws Exception {
-		
-		logger.debug(String.format("[HttpImpl] [PRE] %s %s , thread id: %s , thread name:  %s", url, msgId, Thread.currentThread().getId(), Thread.currentThread().getName()));
+				
 		if (useAuth) {
 			postNTLM(body, url, sContentType, msgId);
 		} else {
@@ -113,11 +111,16 @@ public class HttpImpl implements IHttp {
 				response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
 				checkHttpResonseStatusCode(url, response.getStatusCode().value());				
 			}catch(RestClientException e){
-				logger.debug(String.format("[HttpImpl] [ERR] %s %s %s, thread id: %s , thread name:  %s", url, msgId, e.getMessage(), Thread.currentThread().getId(), Thread.currentThread().getName()));
+				MyLogger.error(getClass(), String.format("%s %s [%s], [%s], [%s]", 
+						msgId,						
+						url,						
+						e.getMessage(),
+						entity.getHeaders().toString(),
+						entity.getBody()
+						));
 				throw new HttpNotFoundException(String.format("HttpImpl, url: < %s >, %s",e.getMessage(), url));
 			}			
-		}
-		logger.debug(String.format("[HttpImpl] [OK] %s %s , thread id: %s , thread name:  %s", url, msgId, Thread.currentThread().getId(), Thread.currentThread().getName()));
+		}		
 	}
 
 	
@@ -130,6 +133,7 @@ public class HttpImpl implements IHttp {
 		HttpConnectionParams.setSoTimeout(my_httpParams, appConfig.timeoutPolicies.getBackAsyncReadTimeout());
 	
 		DefaultHttpClient httpclient = new DefaultHttpClient(my_httpParams);
+		HttpPost httpPost = null;
 		try {
 			httpclient.addRequestInterceptor(new HttpRequestInterceptor() {
 				public void process(final HttpRequest request, final HttpContext context)
@@ -142,7 +146,7 @@ public class HttpImpl implements IHttp {
 			});
 
 			HttpContext localContext = new BasicHttpContext();
-			HttpPost httpPost = new HttpPost(url);
+			httpPost = new HttpPost(url);
 
 			httpPost.addHeader("Content-Type", contentType);
 			
@@ -167,11 +171,25 @@ public class HttpImpl implements IHttp {
 			if (response.getEntity() != null) {
 				response.getEntity().consumeContent();
 			}
-		} catch (HttpNotFoundException e) {
-			logger.debug(String.format("[HttpImpl] [ERR] NTLM %s %s %s, thread id: %s , thread name:  %s", url, msgId, e.getMessage(), Thread.currentThread().getId(), Thread.currentThread().getName()));
+		} catch (HttpNotFoundException e) {			
+			MyLogger.error(getClass(), String.format("NTLM: %s %s [%s], [%s], [%s]", 
+					msgId,						
+					url,						
+					e.getMessage(),
+					httpPost != null ? httpPost.getAllHeaders() : "",
+					body
+					));
+			
 			throw new HttpNotFoundException(String.format("HttpImpl NTLM: %s",e.getMessage()));
 		} catch (Exception e) {
-			logger.debug(String.format("[HttpImpl] [ERR] NTLM %s %s %s, thread id: %s , thread name:  %s", url, msgId, e.getMessage(), Thread.currentThread().getId(), Thread.currentThread().getName()));
+			MyLogger.error(getClass(), String.format("NTLM: %s %s [%s], [%s], [%s]", 
+					msgId,						
+					url,						
+					e.getMessage(),
+					httpPost != null ? httpPost.getAllHeaders() : "",
+					body
+					));
+			
 			throw new Exception(String.format("HttpImpl NTLM: %s",e.getMessage()));
 		} finally {
 			httpclient.getConnectionManager().shutdown();

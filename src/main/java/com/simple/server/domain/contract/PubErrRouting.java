@@ -8,10 +8,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonAutoDetect
 @JsonDeserialize(as = PubErrRouting.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PubErrRouting extends AContract{
+public class PubErrRouting extends ALogContract{
 
 	@JsonProperty("id")
 	int id;
+	
+	private Boolean useAuth = false;
 	
 	@Override
 	public String getClazz() {
@@ -24,5 +26,14 @@ public class PubErrRouting extends AContract{
 	public void setId(int id) {
 		this.id = id;
 	}
+
+	public Boolean getUseAuth() {
+		return useAuth;
+	}
+
+	public void setUseAuth(Boolean useAuth) {
+		this.useAuth = useAuth;
+	}
+	
 
 }

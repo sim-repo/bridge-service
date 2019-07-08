@@ -11,6 +11,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -46,9 +47,28 @@ public class TaskRunner  {
     ConcurrentHashMap<Object, List<ITask>> tasks = new ConcurrentHashMap<>();
     CopyOnWriteArrayList<ITask> ltasks = new CopyOnWriteArrayList<ITask>();
     ConcurrentHashMap<Class<ATask>, Integer> classToRun = new ConcurrentHashMap<>();
+ 
     
-    
-    
+	
+	@Value("${bridge.task.dispatch.num:5}")
+	private Integer busDispatcherTaskNum;
+	
+	@Value("${bridge.task.read.num:1}")
+	private Integer readTaskNum;
+
+	@Value("${bridge.task.write.num:1}")
+	private Integer writeTaskNum;
+	
+	@Value("${bridge.task.pub.num:5}")
+	private Integer pubTaskNum;	
+	
+	@Value("${bridge.task.sub.num:1}")
+	private Integer subTaskNum;
+	
+	@Value("${bridge.task.logsender.num:5}")
+	private Integer logsenderTaskNum;	
+	
+	
 	public <T extends ATask> List<T> newRunTask(Mediator mediator, Class<T> clazz, int num) throws Exception{
     	 ReentrantLock lock = new ReentrantLock();
          Condition condition = lock.newCondition();
@@ -111,12 +131,12 @@ public class TaskRunner  {
         	try {		        		 
         		newRunTask(appConfig.getMediator(), LoadConfigTask.class, 1);
         		Thread.currentThread().sleep(20000);
-        		newRunTask(appConfig.getMediator(), DispatcherTask.class, 1);
-        		newRunTask(appConfig.getMediator(), ReadTask.class, 1);
-        		newRunTask(appConfig.getMediator(), WriteTask.class, 1);
-        		newRunTask(appConfig.getMediator(), PubTask.class, 1);
-        		newRunTask(appConfig.getMediator(), SubTask.class, 1);
-        		newRunTask(appConfig.getMediator(), LogSenderTask.class, 1);
+        		newRunTask(appConfig.getMediator(), DispatcherTask.class, busDispatcherTaskNum);
+        		newRunTask(appConfig.getMediator(), ReadTask.class, readTaskNum);
+        		newRunTask(appConfig.getMediator(), WriteTask.class, writeTaskNum);
+        		newRunTask(appConfig.getMediator(), PubTask.class, pubTaskNum);
+        		newRunTask(appConfig.getMediator(), SubTask.class, subTaskNum);
+        		newRunTask(appConfig.getMediator(), LogSenderTask.class, logsenderTaskNum);
         		//newRunTask(appConfig.getMediator(), StatTask.class, 1);        	        		
         		
         		

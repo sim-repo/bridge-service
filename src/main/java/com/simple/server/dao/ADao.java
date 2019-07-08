@@ -39,8 +39,6 @@ public abstract class ADao implements IDao{
 	@Autowired
 	protected AppConfig appConfig;
 	
-	private static final Logger logger = LogManager.getLogger(ADao.class);
-	
 	@Override
 	public void insert(Session currentSession, List<IRec> list) throws Exception {
 		int count=0;

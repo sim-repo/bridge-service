@@ -13,14 +13,20 @@
 		http://activemq.apache.org/schema/core/activemq-core-5.9.1.xsd">
 
 
+	<bean
+	  class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	  <property name="location" value="file:///C:/Program Files/Java/env_vars/config.properties" />	    
+	</bean>
+
+
 	<!-- *******DS********* -->
 
 	<bean id="navDS_Work"
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
 		<property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />											
-		<property name="url" value="jdbc:sqlserver://MSK10NAV55;databaseName=SimpleERP;" />
-		<property name="username" value="jservice" />
-		<property name="password" value="Larina123" />
+		<property name="url" value="jdbc:sqlserver://MSK10NAV55;databaseName=SimpleERP" />
+		<property name="username" value="${nav.user}" />
+		<property name="password" value="${nav.psw}" />
 	</bean>
 
 
@@ -28,45 +34,27 @@
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
 		<property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />											
 		<property name="url" value="jdbc:sqlserver://MSK10NAV52\MIRROR;databaseName=SimpleERPforLK;" />
-		<property name="username" value="jservice" />
-		<property name="password" value="Larina123" />
+		<property name="username" value="${nav.user}" />
+		<property name="password" value="${nav.psw}" />
 	</bean>
 	
 	<bean id="navDS_MainCopy"
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
 		<property name="driverClassName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver" />											
 		<property name="url" value="jdbc:sqlserver://MSK10NAV52\MIRROR;databaseName=SimpleERPCopyNAV;" />
-		<property name="username" value="jservice" />
-		<property name="password" value="Larina123" />
+		<property name="username" value="${nav.user}" />
+		<property name="password" value="${nav.psw}" />
 	</bean>
 	
 	
 	<bean id="myDS"
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
 		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
-		<property name="url" value="jdbc:mysql://localhost:3306/jdb?serverTimezone=UTC&amp;autoReconnect=true&amp;useSSL=false" />
-		<!-- <property name="url" value="jdbc:mysql://localhost:3306/jdb?serverTimezone=UTC&amp;autoReconnect=true&amp;useSSL=false" /> -->
-		<property name="username" value="root" />
-		<property name="password" value="root" />
+		<property name="url" value="${db.connectionString}/jdb?serverTimezone=UTC&amp;autoReconnect=true&amp;useSSL=false&amp;useUnicode=true;" />											
+		<property name="username" value="${db.user}" />
+		<property name="password" value="${db.psw}" />
 	</bean>
 	
- 	<!--
-	<bean id="pgDS"
-	        class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-	        <property name="driverClassName" value="org.postgresql.Driver" />
-	        <property name="url" value="jdbc:postgresql://localhost:5432/jdb" />
-	        <property name="username" value="postgres" />
-	        <property name="password" value="postgres" />
-	        <property name="socketTimeout" value="10"/>
-	
-	        <property name="connectionProperties">
-	            <props>
-	                <prop key="socketTimeout">100</prop>
-	            </props>
-	        </property>
-	</bean>-->
-
-
 
 	<!-- *******SessionFactory********* -->
 
@@ -77,7 +65,7 @@
 		<property name="hibernateProperties">
 			<props>
 				<prop key="hibernate.dialect">org.hibernate.dialect.SQLServer2008Dialect</prop>
-				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.show_sql">${debug.showsql}</prop>
 			</props>
 		</property>
 		<property name="mappingResources">
@@ -146,8 +134,7 @@
 	<bean id="jdbcTemplateNavCopy" class="org.springframework.jdbc.core.JdbcTemplate">	
     		 <property name="dataSource" ref="navDS_MainCopy"/>
 	</bean>
-		
-	
+
 
 	<bean id="logSessionFactory"
 		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
